@@ -7,7 +7,7 @@
   - 1.3. [[#implementation : Implementation details]]
   - 1.4. [[#status : Status, outlook]]
   - 1.5. [[#license : License]]
-  - 1.6. [[#authors : Authors]]
+  - 1.6. [[#links : Authors, links and downloads]]
 
  - 2. [[#buildinstall : Installation]]
   - 2.1. [[#requirements : Requirements]]
@@ -27,7 +27,7 @@
  * [[changes.html : Changelog]]
  * [[copyright.html : COPYRIGHT]]
 
- 
+
 ---------------------------------------------------------------------
 
 ==( about : 1. About LuaExec )==
@@ -100,13 +100,16 @@ the GPL – see [[copyright][copyright.html]]. Additional components
 are available under a commercial license – see below.
 
 
-===( authors : 1.6. Authors and contributors )===
+===( links : 1.6. Authors, links and downloads )===
 
 Authors:
  - Timm S. Müller <tmueller at schulze-mueller.de>
 
 Open source project website:
  - http://luaexec.neoscientists.org/
+
+Releases:
+ - http://luaexec.neoscientists.org/releases/
 
 Online source code repository:
  - http://hg.neoscientists.org/luaexec
