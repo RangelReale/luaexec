@@ -10,6 +10,6 @@ print(exec.waitmsg())
 c:join()
 
 --[[
-hello   entry.task      m
+hello   task: 0x9a8de8  m
 nil     nil     m
 ]]-- 

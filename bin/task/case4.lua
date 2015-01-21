@@ -10,6 +10,6 @@ print(exec.waitmsg())
 c:join()
 
 --[[
-hello   entry.task      m
+hello   task: 0x100bec8 m
 world   child   m
 ]]-- 

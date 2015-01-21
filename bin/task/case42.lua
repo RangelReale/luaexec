@@ -9,5 +9,5 @@ c:sendmsg("hello")
 c:join()
 
 --[[
-hello   entry.task      m
+hello   task: 0x17c2d38 m
 ]]-- 

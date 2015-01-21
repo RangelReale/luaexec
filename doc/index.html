@@ -108,26 +108,33 @@
 				LuaExec is yet another take on multitasking for Lua.
 			</p>
 			<p>
-				LuaExec is mainly focused on portability and concise semantics.
-				It provides multiple contexts of execution in the most abstract
-				sense, behaving understandably, platform-independent and unencumbered
-				by Lua versions and OS specific details.
+				LuaExec is mainly focused on general applicability, simplicity and
+				concise semantics. It provides multiple contexts of execution in the
+				most abstract sense, behaving understandably, platform-independently
+				and unencumbered by Lua versions and OS specific details.
 			</p>
 		</div>
 		<div class="node"><h3><a name="demarcation" id="demarcation">1.2 What it does and doesn't</a></h3>
 			<blockquote>
 				<ul>
 					<li>
-						one Lua interpreter per task
+						runs a Lua interpreter per task
+					</li>
+					<li>
+						is recursive: A child task can require the <code>tek.lib.exec</code> 
+						module again and run child tasks again
 					</li>
 					<li>
 						data exchange using messages, signals, arguments and return values
 					</li>
 					<li>
-						allows to synchonize on: task completion, signals, messages
+						allows to synchronize on: task completion, signals, messages
 					</li>
 					<li>
-						signals: a, t, c, m (abort, terminate, child, message)
+						abstract signals: a, t, c, m (abort, terminate, child, message)
+					</li>
+					<li>
+						tasks can find each other by name or by parent
 					</li>
 					<li>
 						no shared data, no marshalling, this is at the user's discretion
@@ -145,28 +152,28 @@
 						LuaExec is a regular module using only the legal Lua API.
 					</li>
 					<li>
-						should work with Lua 5.1, 5.2, 5.3, and LuaJIT on POSIX and
+						It should work with Lua 5.1, 5.2, 5.3, and LuaJIT on POSIX and
 						Windows, if Lua 5.2 and 5.3 are compiled with <code>LUA_COMPAT_MODULE</code>,
 						but not all combinations are fully tested.
 					</li>
 					<li>
-						child tasks are subject to garbage collection in their parent
+						Child tasks are subject to garbage collection in their parent
 						that created them. Their underlying OS threads are always joined
-						and <em>never killed forcibly</em>, and all resources requsted in any
+						and <em>never killed forcibly</em>, and all resources requested in any
 						task are meant to be returned, at the latest through garbage
 						collection.
 					</li>
 					<li>
-						a Lua error in a task raises a signal, a (abort), that is by
+						A Lua error in a task raises a signal, a (abort), that is by
 						default propagated to the parent task.
 					</li>
 					<li>
-						child tasks and tasks that spawned children are, by default,
+						Child tasks and tasks that spawned children are, by default,
 						supplied with a debug hook that checks for the abortion signal,
 						where it raises an error, signals its parent, and so forth.
 					</li>
 					<li>
-						the hook can be disabled on a per-task basis. In such tasks
+						The hook can be disabled on a per-task basis. In such tasks
 						abortion strikes only when they are suspended in wait, sleep etc.
 					</li>
 				</ul>
@@ -176,8 +183,8 @@
 			<p>
 				This project is a prototype and request for comments. Additions,
 				suggestions, improvements, bug fixes are likely needed and welcome.
-				Performance was no consideration yet. In its current stage it is
-				about getting semantics right.
+				Performance was no consideration yet. In its current stage LuaExec
+				is about getting semantics right.
 			</p>
 			<p>
 				This project is a spin-off from the
@@ -191,8 +198,8 @@
 			</p>
 			<p>
 				Given sufficient interest, this library might be extended in a way
-				that other Lua libraries can be written against LuaExec's C and Lua
-				APIs, so that future Lua sockets, I/O, tasks, message libraries and
+				that other Lua modules and libraries can be written against LuaExec's
+				C and Lua APIs, so that future Lua sockets and I/O, libraries and
 				applications can converge and be synchronized on atomically in a
 				platform-independent, Lua-ish way.
 			</p>
@@ -253,7 +260,7 @@
 		</div>
 		<div class="node"><h3><a name="requirements" id="requirements">2.1. Requirements</a></h3>
 			<p>
-				Development tools and libraries:
+				Development tools:
 			</p>
 			<blockquote>
 				<ul>
@@ -264,7 +271,7 @@
 						GCC or LLVM/clang
 					</li>
 					<li>
-						MinGW (for building for the Windows platform)
+						MinGW for building for the Windows platform
 					</li>
 				</ul>
 			</blockquote>
@@ -306,9 +313,7 @@
 			<p>
 				On FreeBSD and NetBSD you need a Lua binary which is linked with the
 				<code>-pthread</code> option, as LuaExec is using multithreaded code in shared
-				libraries, which are dynamically loaded by the interpreter. For
-				linking on NetBSD uncomment the respective section in the config
-				file.
+				libraries, which are dynamically loaded by the interpreter.
 			</p>
 		</div>
 		<div class="node"><h3><a name="building" id="building">2.3. Building</a></h3>
@@ -396,7 +401,7 @@ end, arg&#091;1&#093; or &quot;localhost:8080&quot;)
 httpd:terminate() -- or httpd:join()
 </pre>
 			<p>
-				To start it serving its own documentation (default localhost:8080):
+				To start it serving LuaExec's documentation (default localhost:8080):
 			</p>
 <pre>
 $ bin/webserver.lua &#091;host:port&#093;
@@ -408,7 +413,8 @@ $ bin/webserver.lua &#091;host:port&#093;
 				against a browser than against the specification.
 			</p>
 			<p>
-				Additions, fixes, improvements are welcome.
+				As for the rest of the package, fixes, improvements and suggestions
+				are welcome.
 			</p>
 			<h3>
 				HTTP server test pages
