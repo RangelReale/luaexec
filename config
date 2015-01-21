@@ -1,0 +1,178 @@
+
+#------------------------------------------------------------------------------
+# Platform to build against [Choices: posix, winnt]:
+#------------------------------------------------------------------------------
+
+PLATFORM ?= posix
+
+#------------------------------------------------------------------------------
+# Dynamic link library extension [Choices: .so, .dll, .sl, ...]:
+#------------------------------------------------------------------------------
+
+DLLEXT = .so
+
+#------------------------------------------------------------------------------
+# Compiler configuration:
+# Comment in TSYS_POSIX if your platform is not listed in include/tek/config.h
+#------------------------------------------------------------------------------
+
+# CROSS_COMPILE =
+CC = $(CROSS_COMPILE)gcc -fpic # -DTSYS_POSIX
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# For Windows using MinGW:
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# CC = $(CROSS_COMPILE)gcc -DWIN32
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Cross-build using MinGW:
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# CROSS_COMPILE = i586-mingw32-
+
+#------------------------------------------------------------------------------
+# Platform libraries:
+# If you link any libraries from directories not in the system run-time
+# search path, you may need to uncomment the $(CC_LD_RT) flags for those
+# libraries below.
+#------------------------------------------------------------------------------
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# POSIX:
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+PLATFORM_LIBS = -pthread
+CC_LD_RT = -Wl,-rpath,
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# HPPA, IA64 HPUX: Note that DLLEXT (see above) must be .sl
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# PLATFORM_LIBS = -D_POSIX_C_SOURCE=199506L -lpthread
+# CC_LD_RT = -Wl,+s,+b,
+# for IA64:
+# CC_LD_RT = -Wl,+b,
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Solaris:
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# CC_LD_RT = -R
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Mac OS X:
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# PLATFORM_LIBS =
+# CC_LD_RT = -Wl,-rpath,
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# NetBSD:
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# CC_LD_RT = -Wl,-rpath=/usr/X11R7/lib:
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Windows:
+# (Assuming that lua51.dll is in the top-level directory of the distribution)
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# PLATFORM_LIBS = -lmsvcrt -lkernel32 -lwinmm -luser32 -lshell32 -ladvapi32
+# LUA_LIBS = -L $(BASEDIR) -llua51
+
+#------------------------------------------------------------------------------
+# TEKlib features:
+# ENABLE_LAZY_SINGLETON - multithreaded lazy creation of a TEKlib singleton,
+# allowing thread rendezvous (this breaks 100% ROM-ability)
+#------------------------------------------------------------------------------
+
+TEKLIB_DEFS = -DENABLE_LAZY_SINGLETON
+
+#------------------------------------------------------------------------------
+# Installation and system paths:
+# (Installation is not always required, e.g. x11 and windows can do without)
+#------------------------------------------------------------------------------
+
+PREFIX ?= /usr/local
+LUAVER ?= 5.1
+LUA_LIB = $(PREFIX)/lib/lua/$(LUAVER)
+LUA_SHARE = $(PREFIX)/share/lua/$(LUAVER)
+SYS_LUA_LIB = $(PREFIX)/lib/lua/$(LUAVER)
+SYS_LUA_SHARE = $(PREFIX)/share/lua/$(LUAVER)
+
+#------------------------------------------------------------------------------
+# Build paths:
+#------------------------------------------------------------------------------
+
+BASEDIR ?= .
+INCDIR = $(BASEDIR)/include
+LIBDIR = $(BASEDIR)/lib/$(PLATFORM)
+OBJDIR = build/$(PLATFORM)
+BINDIR = $(BASEDIR)/bin
+MODDIR = $(BINDIR)/mod
+
+#------------------------------------------------------------------------------
+# Compiler flags:
+#------------------------------------------------------------------------------
+
+DEBUG = -DTDEBUG=5 -g # TDEBUG: the lower, the more verbose. 5 = WARN
+WARN = -Wall -Wextra -Wno-unused-parameter -Wno-unused-function -Wno-long-long
+OPT = -O2 -fno-strict-aliasing
+INCL = -I. -Iinclude -I$(INCDIR)
+LIBCFLAGS = $(DEBUG) $(WARN) $(OPT) $(INCL) $(EXTRADEFS) $(CPPFLAGS) $(CFLAGS)
+MODCFLAGS = -shared -L $(LIBDIR) $(LDFLAGS)
+# For Mac OS X:
+# MODCFLAGS = -bundle -undefined dynamic_lookup -L $(LIBDIR) $(LDFLAGS)
+BINCFLAGS = $(DEBUG) $(WARN) $(OPT) $(INCL) $(EXTRADEFS) $(LDFLAGS)
+# for compilation of Lua code:
+LUAARCH = -m64 # -m32 for 32bit, -m64 for 64bit architecture
+
+#------------------------------------------------------------------------------
+# Build tools:
+#------------------------------------------------------------------------------
+
+AR = $(CROSS_COMPILE)ar rcu
+RM = rm
+RMDIR = rm -r
+MKDIR = mkdir -p
+ECHO = echo
+INSTALL_B = install
+INSTALL_F = install
+INSTALL_D = install -d
+INSTALL_S = install -s
+
+#------------------------------------------------------------------------------
+# Predefined targets:
+#------------------------------------------------------------------------------
+
+default-help:
+	@echo "==============================================================================="
+	@echo "Default build targets:"
+	@echo "-------------------------------------------------------------------------------"
+	@echo "all ..................... build everything that is needed"
+	@echo "libs .................... build libraries"
+	@echo "modules ................. build shared objects"
+	@echo "install ................. install modules globally"
+	@echo "clean ................... delete temporary files"
+	@echo "help .................... show these and all extra targets for this Makefile"
+	@echo "==============================================================================="
+
+FORCE:
+
+$(BINDIR):
+	-$(MKDIR) $@
+$(MODDIR):
+	-$(MKDIR) $@
+$(LIBDIR):
+	-$(MKDIR) $@
+$(OBJDIR):
+	-$(MKDIR) $@
+
+#------------------------------------------------------------------------------
+# Tests:
+#------------------------------------------------------------------------------
+
+run:
+	lua bin/webserver.lua localhost:8080
+

@@ -1,0 +1,54 @@
+<%
+addbuffer "Content-Type: text/html\r\n\r\n"
+%>
+<?xml version="1.0"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" 
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<title>Yeah</title>
+	</head>
+	<body>
+		<p>
+			<form action="/webserver/formtest.lua" method="post" accept-charset="utf-8">
+				<input class="fixed" type="text" size="20" maxlength="60" name="form1" value="formvalue1" />
+				<br />
+				<input class="fixed" type="text" size="20" maxlength="60" name="form2" value="formvalue2" />
+				<br />
+				<textarea cols="50" rows="4" name="form3"></textarea>
+				<br />
+				<input type="submit" name="submit" value="Submit" />
+			</form>
+		</p>
+		<hr />
+		<p>
+			<form action="/webserver/formtest.lua" method="post" accept-charset="utf-8" enctype="multipart/form-data">
+				<input type="file" name="file1" maxlength="10000000">
+				<br />
+				<input type="file" name="file2" maxlength="10000000">
+				<br />
+				<input class="fixed" type="text" size="20" maxlength="60" name="form1" value="formvalue1" />
+				<br />
+				<input class="fixed" type="text" size="20" maxlength="60" name="form2" value="formvalue2" />
+				<br />
+				<input type="submit" name="submit" value="Submit" />
+			</form>
+		</p>
+		<hr />
+		<p>
+			<form action="/webserver/testcgi.lua" method="post" accept-charset="utf-8" enctype="multipart/form-data">
+				<input type="file" name="file1" maxlength="10000000">
+				<br />
+				<input type="file" name="file2" maxlength="10000000">
+				<br />
+				<input class="fixed" type="text" size="20" maxlength="60" name="form1" value="formvalue1" />
+				<br />
+				<input class="fixed" type="text" size="20" maxlength="60" name="form2" value="formvalue2" />
+				<br />
+				<input type="submit" name="submit" value="Show result of POST..." />
+			</form>
+		</p>
+		
+	</body>
+</html>

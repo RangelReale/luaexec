@@ -1,0 +1,379 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+	<head>
+		<title>LuaExec</title>
+		<link rel="stylesheet" href="manual.css" />
+	</head>
+	<body>
+		<h1>
+			LuaExec
+		</h1>
+		<p>
+			Version 0.80
+		</p>
+		<hr />
+		<h3>
+			Table of contents
+		</h3>
+		<blockquote>
+			<ul>
+				<li style="list-style-type: none">
+					1. <a href="#about">About LuaExec</a> 
+					<blockquote>
+						<ul>
+							<li style="list-style-type: none">
+								1.1. <a href="#overview">Overview</a> 
+							</li>
+							<li style="list-style-type: none">
+								1.2. <a href="#demarcation">What it does and doesn't</a> 
+							</li>
+							<li style="list-style-type: none">
+								1.3. <a href="#implementation">Implementation details</a> 
+							</li>
+							<li style="list-style-type: none">
+								1.4. <a href="#status">Status, outlook</a> 
+							</li>
+							<li style="list-style-type: none">
+								1.5. <a href="#license">License</a> 
+							</li>
+							<li style="list-style-type: none">
+								1.6. <a href="#authors">Authors</a> 
+							</li>
+						</ul>
+					</blockquote>
+				</li>
+				<li style="list-style-type: none">
+					2. <a href="#buildinstall">Installation</a> 
+					<blockquote>
+						<ul>
+							<li style="list-style-type: none">
+								2.1. <a href="#requirements">Requirements</a> 
+							</li>
+							<li style="list-style-type: none">
+								2.2. <a href="#buildenv">Adjusting the build environment</a> 
+							</li>
+							<li style="list-style-type: none">
+								2.3. <a href="#builing">Building</a> 
+							</li>
+							<li style="list-style-type: none">
+								2.4. <a href="#gendoc">Documentation system</a> 
+							</li>
+						</ul>
+					</blockquote>
+				</li>
+				<li style="list-style-type: none">
+					3. <a href="#examples">Examples</a> 
+					<blockquote>
+						<ul>
+							<li style="list-style-type: none">
+								3.1 <a href="#tests">Tests</a> 
+							</li>
+							<li style="list-style-type: none">
+								3.2 <a href="#httpserver">HTTP server</a> 
+							</li>
+						</ul>
+					</blockquote>
+				</li>
+			</ul>
+		</blockquote>
+		<h3>
+			Reference
+		</h3>
+		<blockquote>
+			<ul>
+				<li>
+					<a href="manual.html#tek.lib.exec">LuaExec module reference</a> 
+				</li>
+				<li>
+					<a href="manual.html">Complete class and library reference manual</a> 
+				</li>
+				<li>
+					<a href="changes.html">Changelog</a> 
+				</li>
+				<li>
+					<a href="copyright.html">COPYRIGHT</a> 
+				</li>
+			</ul>
+		</blockquote>
+		<hr />
+		<div class="node"><h2><a name="about" id="about">1. About LuaExec</a></h2>
+		</div>
+		<div class="node"><h3><a name="overview" id="overview">1.1 Overview</a></h3>
+			<p>
+				LuaExec is yet another take on multitasking for Lua.
+			</p>
+			<p>
+				LuaExec is mainly focused on portability and concise semantics.
+				It provides multiple contexts of execution in the most abstract
+				sense, behaving understandably, platform-independent and unencumbered
+				by Lua versions and OS specific details.
+			</p>
+		</div>
+		<div class="node"><h3><a name="demarcation" id="demarcation">1.2 What it does and doesn't</a></h3>
+			<blockquote>
+				<ul>
+					<li>
+						one Lua interpreter per task
+					</li>
+					<li>
+						data exchange using messages, signals, arguments and return values
+					</li>
+					<li>
+						Signals: a, t, c, m (abort, terminate, child, message)
+					</li>
+					<li>
+						allows to synchonize on: task completion, signals, messages
+					</li>
+					<li>
+						no shared data, no marshalling, this is at the user's discretion
+					</li>
+					<li>
+						no operating system details (e.g. priorities)
+					</li>
+				</ul>
+			</blockquote>
+		</div>
+		<div class="node"><h3><a name="implementation" id="implementation">1.3 Implementation details</a></h3>
+			<blockquote>
+				<ul>
+					<li>
+						LuaExec is a regular module using only the legal Lua API.
+					</li>
+					<li>
+						should work with Lua 5.1, 5.2, 5.3, and LuaJIT on POSIX and
+						Windows, if Lua 5.2 and 5.3 are compiled with <code>LUA_COMPAT_MODULE</code>,
+						but not all combinations are fully tested.
+					</li>
+					<li>
+						Child tasks are subject to garbage collection in their parent
+						that created them. Their underlying OS threads are always joined
+						and <em>never killed forcibly</em>, and all resources requsted in any
+						task are meant to be returned, at the latest through garbage collection.
+					</li>
+					<li>
+						A Lua error in a task raises a signal, a (abort), that is by
+						default propagated to the parent task.
+					</li>
+					<li>
+						Child tasks and tasks that spawned children are, by default,
+						supplied with a debug hook that checks for the abortion signal,
+						where it raises an error, signals its parent, and so forth.
+					</li>
+					<li>
+						The hook can be disabled on a per-task basis. In such tasks
+						abortion strikes only when they are suspended in wait, sleep etc.
+					</li>
+				</ul>
+			</blockquote>
+		</div>
+		<div class="node"><h3><a name="status" id="status">1.4. Status, outlook</a></h3>
+			<p>
+				This project is a request for comments and most likely an
+				unfinished, unpolished, rushed prototype. Additions, suggestions,
+				improvements, bug fixes are welcome. Performance was no consideration
+				yet. This project is currently about getting semantics right.
+			</p>
+			<p>
+				This project is a spin-off from the
+				<a href="http://tekui.neoscientists.org/">tekUI project</a>. The LuaExec 0.80
+				module is fully contained in (but usable independently of) tekUI
+				version 1.11. The reason for outsourcing was to have a separate
+				testbed and package that is unencumbered by the requirements and
+				complexity of graphical input and output. There are a few examples
+				in this package that can be run against tekUI, and there are a few
+				more tasks examples in the tekUI package.
+			</p>
+			<p>
+				Given sufficient interest, this library might be extended in a way
+				that other Lua libraries can be written against LuaExec's C and Lua
+				APIs, so that future Lua sockets, I/O, tasks, message libraries and
+				applications can converge and be synchronized on atomically in a
+				platform-independent, Lua-ish way.
+			</p>
+		</div>
+		<div class="node"><h3><a name="license" id="license">1.5. License</a></h3>
+			<p>
+				LuaExec is free software under the same license as Lua itself: It can
+				be used for both academic and commercial purposes at no cost. It
+				qualifies as Open Source software, and its license is compatible with
+				the GPL &#8211; see <a href="copyright.html">copyright</a>. Additional components
+				are available under a commercial license &#8211; see below.
+			</p>
+		</div>
+		<div class="node"><h3><a name="authors" id="authors">1.6. Authors and contributors</a></h3>
+			<p>
+				Authors:
+			</p>
+			<blockquote>
+				<ul>
+					<li style="list-style-type: none">
+						Timm S. M&#252;ller &lt;tmueller at schulze-mueller.de&gt;
+					</li>
+				</ul>
+			</blockquote>
+			<p>
+				Open source project website:
+			</p>
+			<blockquote>
+				<ul>
+					<li style="list-style-type: none">
+						<a href="http://luaexec.neoscientists.org/">http://luaexec.neoscientists.org/</a> 
+					</li>
+				</ul>
+			</blockquote>
+			<hr />
+		</div>
+		<div class="node"><h2><a name="buildinstall" id="buildinstall">2. Building and installing</a></h2>
+		</div>
+		<div class="node"><h3><a name="requirements" id="requirements">2.1. Requirements</a></h3>
+			<p>
+				Development tools and libraries:
+			</p>
+			<blockquote>
+				<ul>
+					<li>
+						Lua 5.1, 5.2, 5.3, LuaJIT 2.x
+					</li>
+					<li>
+						GCC or LLVM/clang
+					</li>
+					<li>
+						MinGW (for building for the Windows platform)
+					</li>
+				</ul>
+			</blockquote>
+			<p>
+				Lua 5.2 and 5.3 must be compiled with <code>LUA_COMPAT_MODULE</code>.
+			</p>
+			<h4>
+				External Lua modules
+			</h4>
+			<p>
+				LuaExec does not strictly depend on any external Lua modules. The
+				following modules are supported:
+			</p>
+			<blockquote>
+				<ul>
+					<li>
+						<a href="http://www.keplerproject.org/luafilesystem/">LuaFileSystem</a> 
+						for the HTTP server example and documentation generator
+					</li>
+					<li>
+						<a href="http://w3.impa.br/~diego/software/luasocket/">LuaSocket</a> 
+						for the HTTP server example
+					</li>
+				</ul>
+			</blockquote>
+		</div>
+		<div class="node"><h3><a name="buildenv" id="buildenv">2.2. Adjusting the build environment</a></h3>
+			<p>
+				If building fails for you, you may have to adjust the build
+				environment, which is located in the <code>config</code> file on the topmost
+				directory level. Supported build tools are <code>gmake</code> (common under
+				Linux) and <code>pmake</code> (common under FreeBSD). More build options and
+				peculiarities are documented in the tekUI package, many of which
+				apply to the LuaExec package as well.
+			</p>
+			<h4>
+				BSD notes
+			</h4>
+			<p>
+				On FreeBSD and NetBSD you need a Lua binary which is linked with the
+				<code>-pthread</code> option, as LuaExec is using multithreaded code in shared
+				libraries, which are dynamically loaded by the interpreter. For
+				linking on NetBSD uncomment the respective section in the config file.
+			</p>
+		</div>
+		<div class="node"><h3><a name="building" id="building">2.3. Building</a></h3>
+			<p>
+				To see all build targets, type
+			</p>
+<pre>
+# make help
+</pre>
+			<p>
+				The regular build procedure is invoked with
+			</p>
+<pre>
+# make all
+</pre>
+		</div>
+		<div class="node"><h3><a name="gendoc" id="gendoc">2.4 Documentation system</a></h3>
+			<p>
+				LuaExec comes with a documentation generator. It is capable of
+				generating a function reference and hierarchical class index from
+				specially crafted comments in the source code. To regenerate the
+				full documentation, invoke
+			</p>
+<pre>
+# make docs
+</pre>
+			<p>
+				Note that you need
+				<a href="http://www.keplerproject.org/luafilesystem/">LuaFileSystem</a> for
+				the document generator to process the file system hierarchy.
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h2><a name="examples" id="examples">3. Examples</a></h2>
+		</div>
+		<div class="node"><h3><a name="tests" id="tests">3.1 Tests</a></h3>
+			<p>
+				Tests are under <code>bin/task/</code>.
+			</p>
+		</div>
+		<div class="node"><h3><a name="httpserver" id="httpserver">3.2 HTTP Server example</a></h3>
+			<p>
+				As an example, a small HTTP server (supporting CGI and Lua pages)
+				is included that can be run in the background like this:
+			</p>
+<pre>
+local exec = require &quot;tek.lib.exec&quot;
+local httpd = exec.run(function()
+  require &quot;tek.class.httpd&quot;:new {
+    Listen = arg&#091;1&#093;, DocumentRoot = &quot;doc&quot;
+  }:run()
+end, arg&#091;1&#093; or &quot;localhost:8080&quot;)
+-- ... do something else ...
+httpd:terminate() -- or httpd:join()
+</pre>
+			<p>
+				To start it serving its own documentation (default localhost:8080):
+			</p>
+<pre>
+$ bin/webserver.lua host:port
+</pre>
+			<p>
+				It requires luasocket and lfs, and it supports copas/coxpcall if
+				available. Please note that the HTTP/1.1 part of the webserver is just
+				a hack to have a funny example to work with. It was more written against
+				a browser than against the specification.
+			</p>
+			<p>
+				Additions, fixes, improvements are welcome.
+			</p>
+			<h3>
+				HTTP server test pages
+			</h3>
+			<blockquote>
+				<ul>
+					<li>
+						CGI test page: <a href="/webserver/testcgi.lua">/webserver/testcgi.lua</a> 
+					</li>
+					<li>
+						Formtest Lua page: <a href="/webserver/formtest.lhtml">/webserver/formtest.lhtml</a> 
+					</li>
+					<li>
+						Webserver control Lua page: <a href="/webserver/control.lhtml">/webserver/control.lhtml</a> 
+					</li>
+				</ul>
+			</blockquote>
+			<p>
+				(These links should work when you have loaded this document from the
+				provided HTTP server.)
+			</p>
+		</div>
+	</body>
+</html>

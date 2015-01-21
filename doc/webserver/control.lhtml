@@ -1,0 +1,30 @@
+<%
+
+addbuffer "Content-Type: text/html\r\n\r\n"
+%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" 
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<title>Webserver</title>
+	</head>
+	<body>
+		<h2>Webserver control</h2>
+		<div>
+			<form action="/webserver/stop.lua" method="post" accept-charset="utf-8">
+				<input type="submit" name="submit" value="Stop Server" />
+			</form>
+		</div>
+		
+		<h2>Send server some message</h2>
+		<div>
+			<form action="/webserver/sendmsg.lua" method="post" accept-charset="utf-8">
+				<input class="fixed" type="text" size="20" maxlength="60" name="servermsg" value="hello" />
+				<br />
+				<input type="submit" name="submit" value="Submit" />
+			</form>
+		</div>
+		
+	</body>
+</html>

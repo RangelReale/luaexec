@@ -1,0 +1,1465 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+	<head>
+		<title>Reference Manual</title>
+		<link rel="stylesheet" href="manual.css" />
+		<meta name="created" content="21-Jan-2015" />
+	</head>
+	<body>
+		<h1>
+			LuaExec
+		</h1>
+		<p>
+			Version 0.80
+		</p>
+		<hr />
+		<div class="node"><h2><a name="ClassOverview" id="ClassOverview">Class Overview</a></h2>
+			<blockquote>
+				<ul>
+					<li>
+						<a href="#tek.class">Class</a> 
+						<blockquote>
+							<ul>
+								<li>
+									<a href="#tek.class.cgi">CGI</a> 
+								</li>
+								<li>
+									<a href="#tek.class.fifo">FIFO</a> 
+								</li>
+								<li>
+									<a href="#tek.class.httprequest">HTTPRequest</a> 
+								</li>
+								<li>
+									<a href="#tek.class.markup">Markup</a> 
+								</li>
+								<li>
+									<a href="#tek.class.server">Server</a> 
+									<blockquote>
+										<ul>
+											<li>
+												<a href="#tek.class.httpd">HTTPD</a> 
+											</li>
+										</ul>
+									</blockquote>
+								</li>
+								<li>
+									<a href="#tek.class.wtf">WTF</a> 
+								</li>
+							</ul>
+						</blockquote>
+					</li>
+				</ul>
+			</blockquote>
+			<h2>
+				Libraries
+			</h2>
+			<blockquote>
+				<ul>
+					<li>
+						<a href="#tek.lib.args">args</a> 
+					</li>
+					<li>
+						<a href="#tek.lib.debug">debug</a> 
+					</li>
+					<li>
+						<a href="#tek.lib.exec">Exec</a> 
+					</li>
+				</ul>
+			</blockquote>
+			<hr class="page-break" />
+		</div>
+		<div class="node"><h2><a name="tek.class" id="tek.class">Class (v8.1)</a></h2>
+			<div class="definition"><dfn>OVERVIEW</dfn>
+				<blockquote>
+					<p>
+						<a href="#ClassOverview">ClassOverview</a> : Class / <select onchange="if (this.value != '') window.location.href = this.value; this.selectedIndex = 0;"><option value="">6 subclasses</option><option value="#tek.class.cgi">CGI</option><option value="#tek.class.fifo">FIFO</option><option value="#tek.class.httprequest">HTTPRequest</option><option value="#tek.class.markup">Markup</option><option value="#tek.class.server">Server</option><option value="#tek.class.wtf">WTF</option></select>
+					</p>
+					<p>
+						This module implements inheritance and the creation of objects
+						from classes.
+					</p>
+				</blockquote>
+			</div>
+			<div class="definition"><dfn>IMPLEMENTS</dfn>
+				<blockquote>
+					<ul>
+						<li style="list-style-type: none">
+							<a href="#object:getClass"><code>object:getClass()</code></a> - Returns the class of an object, or the super
+							class of a class
+						</li>
+						<li style="list-style-type: none">
+							<a href="#object:getClassName"><code>object:getClassName()</code></a> - Returns the class name of an object or class
+						</li>
+						<li style="list-style-type: none">
+							<a href="#object:getSuper"><code>object:getSuper()</code></a> - Returns the super class of an object or class
+						</li>
+						<li style="list-style-type: none">
+							<a href="#object:instanceOf"><code>object:instanceOf()</code></a> - Checks if an object descends from a class
+						</li>
+						<li style="list-style-type: none">
+							<a href="#Class:new"><code>Class.new()</code></a> - Creates and returns a new object
+						</li>
+						<li style="list-style-type: none">
+							<a href="#Class:newClass"><code>Class.newClass()</code></a> - Creates a child class from a super class
+						</li>
+						<li style="list-style-type: none">
+							<a href="#object:setClass"><code>object:setClass()</code></a> - Changes the class of an object, or the super
+							class of a class
+						</li>
+					</ul>
+				</blockquote>
+				<hr />
+			</div>
+		</div>
+		<div class="node"><h3><a name="object:getClass" id="object:getClass"><code>class = object:getClass()</code></a></h3>
+			<p>
+				This function returns the class of an <code>object</code>. If applied to a
+				class instead of an object, it returns its super class, e.g.:
+			</p>
+<pre>
+superclass = Class.getClass(class)
+</pre>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="object:getClassName" id="object:getClassName"><code>name = object:getClassName()</code></a></h3>
+			<p>
+				This function returns the <code>_NAME</code> 
+				attribute of the <code>object</code>'s class. It is also possible to apply this
+				function to a class instead of an object.
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="object:getSuper" id="object:getSuper"><code>object:getSuper()</code></a></h3>
+			<p>
+				Gets the super class of an object or class.
+				For example, to forward a call to a <code>method</code> to its super class,
+				without knowing its class:
+			</p>
+<pre>
+self:getSuper().method(self, ...)
+</pre>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="object:instanceOf" id="object:instanceOf"><code>is_descendant = object:instanceOf(class)</code></a></h3>
+			<p>
+				Returns <strong>true</strong> if <code>object</code> is an instance of or descends from the
+				specified <code>class</code>. It is also possible to apply this function to a class
+				instead of an object, e.g.:
+			</p>
+<pre>
+Class.instanceOf(Button, Area)
+</pre>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="Class:new" id="Class:new"><code>object = Class.new(class[, object])</code></a></h3>
+			<p>
+				Creates and returns a new object of the given <code>class</code>. Optionally,
+				it just prepares the specified <code>object</code> (a table) for inheritance and
+				attaches the <code>class</code>' methods and data.
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="Class:newClass" id="Class:newClass"><code>class = Class.newClass(superclass[, class])</code></a></h3>
+			<p>
+				Derives a new class from the specified <code>superclass</code>. Optionally,
+				an existing <code>class</code> (a table) can be specified. If a <code>_NAME</code> field
+				exists in this class, it will be used. Otherwise, or if a new class is
+				created, <code>class._NAME</code> will be composed from <code>superclass._NAME</code> and
+				an unique identifier. The same functionality can be achieved by calling
+				a class like a function, so the following invocations are equivalent:
+			</p>
+<pre>
+class = Class.newClass(superclass)
+class = superclass()
+</pre>
+			<p>
+				The second notation allows a super class to be passed as the second
+				argument to Lua's <code>module</code> function, which will set up a child class
+				inheriting from <code>superclass</code> in the module table.
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="object:setClass" id="object:setClass"><code>object:setClass(class)</code></a></h3>
+			<p>
+				Changes the class of an object
+				or the super class of a class.
+			</p>
+			<hr class="page-break" />
+		</div>
+		<div class="node"><h2><a name="tek.class.cgi" id="tek.class.cgi">CGI (v5.1)</a></h2>
+			<div class="definition"><dfn>IMPLEMENTS</dfn>
+				<blockquote>
+					<p>
+						CGI:beginPost(req)
+						CGI:beginUpload(req, fname)
+						CGI:doRequest(req)
+						CGI:endPost(req, stream)
+						CGI:endRequest(req, protocolstatus, appstatus)
+						CGI:endUpload(req, fname, fh)
+						CGI:haveParams(req)
+						<a href="#CGI:serve"><code>CGI:serve()</code></a> 
+						CGI:updatePost(req, stream)
+						CGI:updateUpload(req, fname, fh, buf)
+					</p>
+				</blockquote>
+			</div>
+			<div class="definition"><dfn>OVERRIDES</dfn>
+				<blockquote>
+					<ul>
+						<li style="list-style-type: none">
+							<a href="#Class:new"><code>Class.new()</code></a> 
+						</li>
+					</ul>
+				</blockquote>
+				<hr />
+			</div>
+		</div>
+		<div class="node"><h3><a name="CGI:beginPost" id="CGI:beginPost"><code>continue = beginPost(req)</code></a></h3>
+			<p>
+				Signals that a POST request has begun.
+				Parameters are known, but data is yet to be read.
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="CGI:beginUpload" id="CGI:beginUpload"><code>fh = beginUpload(req, fname, argname)</code></a></h3>
+			<p>
+				Begin upload
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="CGI:doRequest" id="CGI:doRequest"><code>doRequest(req)</code></a></h3>
+			<p>
+				Function called when a request can be processed.
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="CGI:endPost" id="CGI:endPost"><code>continue = endPost(req, s)</code></a></h3>
+			<p>
+				Signals that all data belonging to a POST
+				request have arrived.
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="CGI:endRequest" id="CGI:endRequest"><code>success, msg = endRequest(request[, protstatus[, appstatus]])</code></a></h3>
+			<p>
+				Confirms the end of a CGI request. Optionally, the application can
+				signify a protocol status (by default, FCGI_REQUEST_COMPLETE) and an
+				application status (by default, 0). See
+				<a href="http://www.fastcgi.com/devkit/doc/fcgi-spec.html">CGI protocol</a> 
+				specification for details.
+				The result will be true, indicating success, or nil followed by an
+				error message.
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="CGI:endUpload" id="CGI:endUpload"><code>is_valid = endUpload(req, fname, fh)</code></a></h3>
+			<p>
+				Complete upload
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="CGI:haveParams" id="CGI:haveParams"><code>continue = haveParams(req)</code></a></h3>
+			<p>
+				Signals the arrival of all parameters that belong to the request. The
+				return value is a boolean indicating success and whether processing
+				should continue.
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="CGI:updatePost" id="CGI:updatePost"><code>continue = updatePost(req, s)</code></a></h3>
+			<p>
+				Signals that new data is available on the
+				stream that belongs to a POST request. The return value indicates whether
+				processing should continue.
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="CGI:updateUpload" id="CGI:updateUpload"><code>success = updateUpload(req, fname, fh, buf)</code></a></h3>
+			<p>
+				Update upload
+			</p>
+			<hr class="page-break" />
+		</div>
+		<div class="node"><h2><a name="tek.class.fifo" id="tek.class.fifo">FIFO (v2.1)</a></h2>
+			<div class="definition"><dfn>OVERVIEW</dfn>
+				<blockquote>
+					<p>
+						Implements a simple FIFO
+					</p>
+				</blockquote>
+			</div>
+			<div class="definition"><dfn>MEMBERS</dfn>
+			</div>
+			<div class="definition"><dfn>IMPLEMENTS</dfn>
+			</div>
+			<div class="definition"><dfn>OVERRIDES</dfn>
+				<blockquote>
+					<ul>
+						<li style="list-style-type: none">
+							<a href="#Class:new"><code>Class.new()</code></a> 
+						</li>
+					</ul>
+				</blockquote>
+				<hr class="page-break" />
+			</div>
+		</div>
+		<div class="node"><h2><a name="tek.class.httpd" id="tek.class.httpd">HTTPD (v1.0)</a></h2>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="HTTPD:serveClient" id="HTTPD:serveClient"><code>serveClient(fd)</code></a></h3>
+			<p>
+				This function serves an incoming client request on the
+				specified socket.
+			</p>
+			<hr class="page-break" />
+		</div>
+		<div class="node"><h2><a name="tek.class.httprequest" id="tek.class.httprequest">HTTPRequest (v2.0)</a></h2>
+			<div class="definition"><dfn>OVERVIEW</dfn>
+				<blockquote>
+					<p>
+						HTTPRequest class
+					</p>
+				</blockquote>
+			</div>
+			<div class="definition"><dfn>MEMBERS</dfn>
+				<blockquote>
+					<ul>
+						<li style="list-style-type: none">
+							<code>Environment &#091;ISG&#093;</code> (table)
+							<blockquote>
+								<p>
+									Initial environment of server variables
+								</p>
+							</blockquote>
+						</li>
+						<li style="list-style-type: none">
+							<code>MaxContentLength &#091;ISG&#093;</code> (number)
+							<blockquote>
+								<p>
+									Maximum size allowed for POST, in bytes. Default: 1000000
+								</p>
+							</blockquote>
+						</li>
+					</ul>
+				</blockquote>
+			</div>
+			<div class="definition"><dfn>IMPLEMENTS</dfn>
+				<blockquote>
+					<ul>
+						<li style="list-style-type: none">
+							HTTPRequest.decodeURL - Decodes an URL-encoded string
+						</li>
+						<li style="list-style-type: none">
+							HTTPRequest:getEnv(key) - Gets a server environment variable
+						</li>
+						<li style="list-style-type: none">
+							<a href="#HTTPRequest:getArgs"><code>HTTPRequest:getArgs()</code></a> - Gets table of request arguments
+						</li>
+						<li style="list-style-type: none">
+							<a href="#HTTPRequest:getDocument"><code>HTTPRequest:getDocument()</code></a> - Gets table of document properties
+						</li>
+					</ul>
+				</blockquote>
+			</div>
+			<div class="definition"><dfn>OVERRIDES</dfn>
+				<blockquote>
+					<ul>
+						<li style="list-style-type: none">
+							<a href="#Class:new"><code>Class.new()</code></a> 
+						</li>
+					</ul>
+				</blockquote>
+				<hr />
+			</div>
+		</div>
+		<div class="node"><h3><a name="HTTPRequest:decodeURL" id="HTTPRequest:decodeURL"><code>decoded = decodeURL(url)</code></a></h3>
+			<p>
+				Decode URL-encoded string
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="HTTPRequest:getArgs" id="HTTPRequest:getArgs"><code>args = getArgs()</code></a></h3>
+			<p>
+				Get table of request arguments
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="HTTPRequest:getDocument" id="HTTPRequest:getDocument"><code>document = getDocument()</code></a></h3>
+			<p>
+				Get table of document properties
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="HTTPRequest:getEnv" id="HTTPRequest:getEnv"><code>val = getEnv(key)</code></a></h3>
+			<p>
+				Get environment (server) variable
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="HTTPRequest:getHTTPVariable" id="HTTPRequest:getHTTPVariable"><code>val = getHTTPVariable(key)</code></a></h3>
+			<p>
+				Get variable
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="HTTPRequest:insertArgString" id="HTTPRequest:insertArgString"><code>insertArgString(string)</code></a></h3>
+			<p>
+				Insert raw arguments string
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="HTTPRequest:setEnv" id="HTTPRequest:setEnv"><code>setEnv(key, val)</code></a></h3>
+			<p>
+				Set an environment (server) variable
+			</p>
+			<hr class="page-break" />
+		</div>
+		<div class="node"><h2><a name="tek.class.markup" id="tek.class.markup">Markup (v3.2)</a></h2>
+			<div class="definition"><dfn>OVERVIEW</dfn>
+				<blockquote>
+					<p>
+						<a href="#ClassOverview">ClassOverview</a> :
+						<a href="#tek.class">Class</a> / Markup 
+					</p>
+					<p>
+						This class implements a markup parser and converter for producing
+						feature-rich XHTML 1.0 from plain text with special formattings.
+					</p>
+				</blockquote>
+			</div>
+			<div class="definition"><dfn>IMPLEMENTS</dfn>
+				<blockquote>
+					<ul>
+						<li style="list-style-type: none">
+							<a href="#Markup:new"><code>Markup.new()</code></a> 
+						</li>
+						<li style="list-style-type: none">
+							<a href="#Markup:run"><code>Markup:run()</code></a> 
+						</li>
+					</ul>
+				</blockquote>
+				<hr />
+			</div>
+		</div>
+		<div class="node"><h3><a name="Markup:new" id="Markup:new"><code>parser = Markup:new(args)</code></a></h3>
+			<p>
+				Creates a new markup parser. <code>args</code> can be a
+				table of initial arguments that constitute its behavior. Supported fields
+				in <code>args</code> are:
+			</p>
+			<table>
+				<tr>
+					<td class="column1">
+						<code>indentchar</code> 
+					</td>
+					<td class="column2">
+						Character recognized for indentation, default <code>&quot;\t&quot;</code> 
+					</td>
+				</tr>
+				<tr>
+					<td class="column1">
+						<code>input</code> 
+					</td>
+					<td class="column2">
+						Filehandle or string, default <code>io.stdin</code> 
+					</td>
+				</tr>
+				<tr>
+					<td class="column1">
+						<code>rdfunc</code> 
+					</td>
+					<td class="column2">
+						Line reader, by default reads using <code>args.input:lines</code> 
+					</td>
+				</tr>
+				<tr>
+					<td class="column1">
+						<code>wrfunc</code> 
+					</td>
+					<td class="column2">
+						Writer func, by default <code>io.stdout.write</code> 
+					</td>
+				</tr>
+				<tr>
+					<td class="column1">
+						<code>docname</code> 
+					</td>
+					<td class="column2">
+						Name of document, default <code>&quot;Manual&quot;</code> 
+					</td>
+				</tr>
+				<tr>
+					<td class="column1">
+						<code>features</code> 
+					</td>
+					<td class="column2">
+						Feature codes, default <code>&quot;hespcadlint&quot;</code> 
+					</td>
+				</tr>
+			</table>
+			<p>
+				The parser supports the following features, which can be combined into
+				a string and passed to the constructor in <code>args.features</code>:
+			</p>
+			<table>
+				<tr>
+					<td class="column1">
+						Code
+					</td>
+					<td class="column2">
+						Description
+					</td>
+					<td class="column3">
+						rough HTML equivalent
+					</td>
+				</tr>
+				<tr>
+					<td class="column1">
+						<code>h</code> 
+					</td>
+					<td class="column2">
+						Heading
+					</td>
+					<td class="column3">
+						<code>&lt;h1&gt;</code>, <code>&lt;h2&gt;</code>, ...
+					</td>
+				</tr>
+				<tr>
+					<td class="column1">
+						<code>e</code> 
+					</td>
+					<td class="column2">
+						Emphasis
+					</td>
+					<td class="column3">
+						<code>&lt;strong&gt;</code> 
+					</td>
+				</tr>
+				<tr>
+					<td class="column1">
+						<code>s</code> 
+					</td>
+					<td class="column2">
+						Separator
+					</td>
+					<td class="column3">
+						<code>&lt;hr&gt;</code> 
+					</td>
+				</tr>
+				<tr>
+					<td class="column1">
+						<code>p</code> 
+					</td>
+					<td class="column2">
+						Preformatted block
+					</td>
+					<td class="column3">
+						<code>&lt;pre&gt;</code> 
+					</td>
+				</tr>
+				<tr>
+					<td class="column1">
+						<code>c</code> 
+					</td>
+					<td class="column2">
+						Code
+					</td>
+					<td class="column3">
+						<code>&lt;code&gt;</code> 
+					</td>
+				</tr>
+				<tr>
+					<td class="column1">
+						<code>a</code> 
+					</td>
+					<td class="column2">
+						Anchor, link
+					</td>
+					<td class="column3">
+						<code>&lt;a href=&quot;...&quot;&gt;</code> 
+					</td>
+				</tr>
+				<tr>
+					<td class="column1">
+						<code>d</code> 
+					</td>
+					<td class="column2">
+						Definition
+					</td>
+					<td class="column3">
+						<code>&lt;dfn&gt;</code> 
+					</td>
+				</tr>
+				<tr>
+					<td class="column1">
+						<code>l</code> 
+					</td>
+					<td class="column2">
+						List
+					</td>
+					<td class="column3">
+						<code>&lt;ul&gt;</code>, <code>&lt;li&gt;</code> 
+					</td>
+				</tr>
+				<tr>
+					<td class="column1">
+						<code>i</code> 
+					</td>
+					<td class="column2">
+						Image
+					</td>
+					<td class="column3">
+						<code>&lt;img&gt;</code> 
+					</td>
+				</tr>
+				<tr>
+					<td class="column1">
+						<code>n</code> 
+					</td>
+					<td class="column2">
+						Node header
+					</td>
+					<td class="column3">
+						<code>&lt;a name=&quot;...&quot;&gt;</code> 
+					</td>
+				</tr>
+				<tr>
+					<td class="column1">
+						<code>t</code> 
+					</td>
+					<td class="column2">
+						Table
+					</td>
+					<td class="column3">
+						<code>&lt;table&gt;</code> 
+					</td>
+				</tr>
+				<tr>
+					<td class="column1">
+						<code>f</code> 
+					</td>
+					<td class="column2">
+						Function
+					</td>
+					<td class="column3">
+						(undocumented, internal use only)
+					</td>
+				</tr>
+			</table>
+			<p>
+				After creation of the parser, conversion starts by calling <a href="#Markup:run"><code>Markup:run()</code></a>.
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="Markup:run" id="Markup:run"><code>run()</code></a></h3>
+			<p>
+				This function starts the conversion.
+			</p>
+			<hr class="page-break" />
+		</div>
+		<div class="node"><h2><a name="tek.class.server" id="tek.class.server">Server (v2.2)</a></h2>
+			<div class="definition"><dfn>OVERVIEW</dfn>
+				<blockquote>
+					<p>
+						<a href="#ClassOverview">ClassOverview</a> :
+						<a href="#tek.class">Class</a> /
+						Server / <select onchange="if (this.value != '') window.location.href = this.value; this.selectedIndex = 0;"><option value="">1 subclasses</option><option value="#tek.class.httpd">HTTPD</option></select>
+					</p>
+					<p>
+						This class implements a server.
+						If copas is used, this server provides nonblocking async I/O.
+					</p>
+				</blockquote>
+			</div>
+			<div class="definition"><dfn>IMPLEMENTS</dfn>
+				<blockquote>
+					<ul>
+						<li style="list-style-type: none">
+							<a href="#Server:registerClient"><code>Server:registerClient()</code></a> - Register a client socket
+						</li>
+						<li style="list-style-type: none">
+							<a href="#Server:registerInterval"><code>Server:registerInterval()</code></a> - Register an interval function
+						</li>
+						<li style="list-style-type: none">
+							<a href="#Server:registerOnce"><code>Server:registerOnce()</code></a> - Register a one-shot function
+						</li>
+						<li style="list-style-type: none">
+							<a href="#Server:registerServer"><code>Server:registerServer()</code></a> - Register a server socket
+						</li>
+						<li style="list-style-type: none">
+							<a href="#Server:removeInterval"><code>Server:removeInterval()</code></a> - Remove an interval function
+						</li>
+						<li style="list-style-type: none">
+							<a href="#Server:run"><code>Server:run()</code></a> - Run server (mainloop)
+						</li>
+						<li style="list-style-type: none">
+							<a href="#Server:setServerState"><code>Server:setServerState()</code></a> - Sets server state
+						</li>
+						<li style="list-style-type: none">
+							<a href="#Server:shutdown"><code>Server:shutdown()</code></a> - Tries to shut down services, protected
+						</li>
+						<li style="list-style-type: none">
+							<a href="#Server:startup"><code>Server:startup()</code></a> - Checks configuration and starts up services
+						</li>
+						<li style="list-style-type: none">
+							<a href="#Server:unregister"><code>Server:unregister()</code></a> - Unregisters a socket
+						</li>
+					</ul>
+				</blockquote>
+			</div>
+			<div class="definition"><dfn>OVERRIDES</dfn>
+				<blockquote>
+					<ul>
+						<li style="list-style-type: none">
+							<a href="#Class:new"><code>Class.new()</code></a> 
+						</li>
+					</ul>
+				</blockquote>
+				<hr />
+			</div>
+		</div>
+		<div class="node"><h3><a name="Server:putMsg" id="Server:putMsg"><code>putMsg(msg)</code></a></h3>
+			<p>
+				Send message (to parent)
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="Server:registerInterval" id="Server:registerInterval"><code>id = registerInterval(interval_in_seconds, func)</code></a></h3>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="Server:registerOnce" id="Server:registerOnce"><code>registerOnce(delay, func[, data])</code></a></h3>
+			<p>
+				Register a function to be called in the
+				server main loop
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="Server:setServerState" id="Server:setServerState"><code>setServerState(state[, delay])</code></a></h3>
+			<p>
+				Supported are &quot;break&quot;, &quot;restart&quot;, ...
+			</p>
+			<hr class="page-break" />
+		</div>
+		<div class="node"><h2><a name="tek.class.wtf" id="tek.class.wtf">WTF (v2.1)</a></h2>
+			<div class="definition"><dfn>OVERVIEW</dfn>
+				<blockquote>
+					<p>
+						LuaWTF - Lua Web Tiny Framework
+					</p>
+				</blockquote>
+			</div>
+			<div class="definition"><dfn>MEMBERS</dfn>
+				<blockquote>
+					<ul>
+						<li style="list-style-type: none">
+							<code>Buffered &#091;ISG&#093;</code> (boolean)
+							<blockquote>
+								<p>
+									Specifies whether the output stream should be collected in
+									a buffer by default. Default: <code>false</code> 
+								</p>
+							</blockquote>
+						</li>
+						<li style="list-style-type: none">
+							<code>Environment &#091;IG&#093;</code> (table)
+							<blockquote>
+								<p>
+									The function environment passed to scripts.
+									Default: an empty environment
+								</p>
+							</blockquote>
+						</li>
+					</ul>
+				</blockquote>
+			</div>
+			<div class="definition"><dfn>IMPLEMENTS</dfn>
+			</div>
+			<div class="definition"><dfn>OVERRIDES</dfn>
+				<blockquote>
+					<ul>
+						<li style="list-style-type: none">
+							<a href="#Class:new"><code>Class.new()</code></a> 
+						</li>
+					</ul>
+				</blockquote>
+				<hr />
+			</div>
+		</div>
+		<div class="node"><h3><a name="WTF:createEnvironment" id="WTF:createEnvironment"><code>env = createEnvironment(request)</code></a></h3>
+			<p>
+				Creates a request-specific HTML
+				environment derived from the Environment property; can be overridden if
+				the combined environment needs to be intercepted for passing it back to
+				the request, f.ex.:
+			</p>
+<pre>
+WTF:new { Environment = _G,
+  createEnvironment = function(self, req)
+				<blockquote>
+   local env = WTF.createEnvironment(self, req)
+   req:setHTMLEnvironment(env)
+   return env
+  end
+ }:doRequest(req)
+				</blockquote>
+</pre>
+			<hr class="page-break" />
+		</div>
+		<div class="node"><h2><a name="tek.lib.args" id="tek.lib.args">args (v2.3)</a></h2>
+			<div class="definition"><dfn>OVERVIEW</dfn>
+				<blockquote>
+					<p>
+						This library implements an argument parser.
+					</p>
+				</blockquote>
+			</div>
+			<div class="definition"><dfn>FORMAT DESCRIPTION</dfn>
+				<blockquote>
+					<p>
+						A string is parsed into an array of arguments according to a format
+						template. Arguments in the template are separated by commas. Each
+						argument in the template consists of a keyword, optionally followed by
+						one or more aliases delimited by equal signs, and an optional set of
+						modifiers delimited by slashes. Modifiers denote the expected
+						data type, if the argument is mandatory and whether a keyword must
+						precede its value to form a valid argument. Example argument template:
+					</p>
+<pre>
+SOURCE=-s/A/M,DEST=-d/A/K
+</pre>
+					<p>
+						This template requires one or more arguments to satisfy <code>SOURCE</code>,
+						and exactly one argument to satisfy <code>DEST</code>. Neither can be omitted.
+						Either <code>-d</code> (or its alias <code>DEST</code>) must precede the value to be
+						accepted as the second argument. Example command lines:
+					</p>
+					<table>
+						<tr>
+							<td class="column1">
+								<code>SOURCE one two three DEST foo</code> 
+							</td>
+							<td class="column2">
+								valid
+							</td>
+						</tr>
+						<tr>
+							<td class="column1">
+								<code>DEST foo -s one</code> 
+							</td>
+							<td class="column2">
+								valid
+							</td>
+						</tr>
+						<tr>
+							<td class="column1">
+								<code>DEST foo</code> 
+							</td>
+							<td class="column2">
+								rejected; source argument missing
+							</td>
+						</tr>
+						<tr>
+							<td class="column1">
+								<code>one two three foo</code> 
+							</td>
+							<td class="column2">
+								rejected; keyword missing
+							</td>
+						</tr>
+						<tr>
+							<td class="column1">
+								<code>one two dest foo</code> 
+							</td>
+							<td class="column2">
+								valid, keys are case insensitive
+							</td>
+						</tr>
+						<tr>
+							<td class="column1">
+								<code>one two three -d=&quot;foo&quot; four</code> 
+							</td>
+							<td class="column2">
+								valid, &quot;four&quot; added to <code>SOURCE</code> 
+							</td>
+						</tr>
+					</table>
+					<p>
+						An option without modifiers represents an optional string argument.
+						Available modifiers are:
+					</p>
+					<blockquote>
+						<ul>
+							<li>
+								<code>/S</code> - <em>Switch</em>; considered a boolean value. When the
+								keyword is present, <strong>true</strong> will be written into the
+								respective slot in the results array.
+							</li>
+							<li>
+								<code>/N</code> - <em>Number</em>; the value will be converted to a number.
+							</li>
+							<li>
+								<code>/K</code> - <em>Keyword</em>; the keyword (or an alias) must precede its
+								value.
+							</li>
+							<li>
+								<code>/A</code> - <em>Always required</em>; This argument cannot be omitted.
+							</li>
+							<li>
+								<code>/M</code> - <em>Multiple</em>; Any number of strings will be accepted,
+								and all values that cannot be assigned to other arguments will
+								show up in this argument. No more than one <code>/M</code> modifier may
+								appear in a template.
+							</li>
+							<li>
+								<code>/F</code> - <em>Fill</em>; literal rest of line. If present, this must
+								be the last argument.
+							</li>
+						</ul>
+					</blockquote>
+					<p>
+						Quoting and escaping: Double quotes can be used to enclose arguments
+						containing equal signs and spaces.
+					</p>
+				</blockquote>
+			</div>
+			<div class="definition"><dfn>FUNCTIONS</dfn>
+				<blockquote>
+					<ul>
+						<li style="list-style-type: none">
+							<a href="#args:read"><code>args.read()</code></a> - Parses a string or table through an argument template
+						</li>
+					</ul>
+				</blockquote>
+			</div>
+			<div class="definition"><dfn>TODO</dfn>
+				<blockquote>
+					<p>
+						Backslashes for escaping quotes, spaces and themselves
+					</p>
+				</blockquote>
+				<hr />
+			</div>
+		</div>
+		<div class="node"><h3><a name="args:read" id="args:read"><code>res, msg = args.read(template, args)</code></a></h3>
+			<p>
+				Parses <code>args</code> according to
+				<code>template</code>. <code>args</code> can be a string or a table of strings. If the
+				arguments can be successfully matched against the template, the result
+				will be a table of parsed arguments, indexed by both keywords and
+				numerical order in which they appear in <code>template</code>, and the second
+				argument will be set to the number of arguments in the template. If the
+				arguments cannot be matched against the template, the result will be
+				<strong>nil</strong> followed by an error message.
+			</p>
+			<hr class="page-break" />
+		</div>
+		<div class="node"><h2><a name="tek.lib.debug" id="tek.lib.debug">debug (v5.2)</a></h2>
+			<div class="definition"><dfn>OVERVIEW</dfn>
+				<blockquote>
+					<p>
+						Debug library - implements debug output and debug levels:
+					</p>
+					<table>
+						<tr>
+							<td class="column1">
+								2
+							</td>
+							<td class="column2">
+								TRACE
+							</td>
+							<td class="column3">
+								used for trace messages
+							</td>
+						</tr>
+						<tr>
+							<td class="column1">
+								4
+							</td>
+							<td class="column2">
+								INFO
+							</td>
+							<td class="column3">
+								informational messages, notices
+							</td>
+						</tr>
+						<tr>
+							<td class="column1">
+								5
+							</td>
+							<td class="column2">
+								WARN
+							</td>
+							<td class="column3">
+								something unexpected happened
+							</td>
+						</tr>
+						<tr>
+							<td class="column1">
+								10
+							</td>
+							<td class="column2">
+								ERROR
+							</td>
+							<td class="column3">
+								something went wrong, e.g. resource unavailable
+							</td>
+						</tr>
+						<tr>
+							<td class="column1">
+								20
+							</td>
+							<td class="column2">
+								FAIL
+							</td>
+							<td class="column3">
+								something went wrong that cannot be coped with
+							</td>
+						</tr>
+					</table>
+					<p>
+						The default debug level is <code>WARN</code>. To set the debug level
+						globally, e.g.:
+					</p>
+<pre>
+db = require &quot;tek.lib.debug&quot;
+db.level = db.INFO
+</pre>
+					<p>
+						The default debug output stream is <code>stderr</code>.
+						To override it globally, e.g.:
+					</p>
+<pre>
+db = require &quot;tek.lib.debug&quot;
+db.out = io.open(&quot;logfile&quot;, &quot;w&quot;)
+</pre>
+				</blockquote>
+			</div>
+			<div class="definition"><dfn>FUNCTIONS</dfn>
+				<blockquote>
+					<ul>
+						<li style="list-style-type: none">
+							<a href="#debug:console"><code>debug.console()</code></a> - Enters the debug console
+						</li>
+						<li style="list-style-type: none">
+							<a href="#debug:dump"><code>debug.dump()</code></a> - Dumps a table recursively
+						</li>
+						<li style="list-style-type: none">
+							<a href="#debug:error"><code>debug.error()</code></a> - Prints a text in the <code>ERROR</code> debug level
+						</li>
+						<li style="list-style-type: none">
+							<a href="#debug:execute"><code>debug.execute()</code></a> - Executes a function in the specified debug level
+						</li>
+						<li style="list-style-type: none">
+							<a href="#debug:fail"><code>debug.fail()</code></a> - Prints a text in the <code>FAIL</code> debug level
+						</li>
+						<li style="list-style-type: none">
+							<a href="#debug:info"><code>debug.info()</code></a> - Prints a text in the <code>INFO</code> debug level
+						</li>
+						<li style="list-style-type: none">
+							<a href="#debug:print"><code>debug.print()</code></a> - Prints a text in the specified debug level
+						</li>
+						<li style="list-style-type: none">
+							<a href="#debug:stacktrace"><code>debug.stacktrace()</code></a> - Prints a stacktrace in the specified debug level
+						</li>
+						<li style="list-style-type: none">
+							<a href="#debug:trace"><code>debug.trace()</code></a> - Prints a text in the <code>TRACE</code> debug level
+						</li>
+						<li style="list-style-type: none">
+							<a href="#debug:warn"><code>debug.warn()</code></a> - Prints a text in the <code>WARN</code> debug level
+						</li>
+						<li style="list-style-type: none">
+							<a href="#debug:wrout"><code>debug.wrout()</code></a> - Output function
+						</li>
+					</ul>
+				</blockquote>
+			</div>
+			<div class="definition"><dfn>VALUES</dfn>
+				<blockquote>
+					<ul>
+						<li style="list-style-type: none">
+							<code>level</code> - Debug level, default 5 (<code>WARN</code>)
+						</li>
+						<li style="list-style-type: none">
+							<code>out</code> - Output stream, default <code>io.stderr</code> 
+						</li>
+					</ul>
+				</blockquote>
+				<hr />
+			</div>
+		</div>
+		<div class="node"><h3><a name="debug:console" id="debug:console"><code>debug.console()</code></a></h3>
+			<p>
+				Enters debug console.
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="debug:dump" id="debug:dump"><code>debug.dump(table[, outfunc])</code></a></h3>
+			<p>
+				Dumps a table as Lua source using
+				<code>outfunc</code>. Cyclic references are silently dropped. The default output
+				function is <a href="#debug:wrout"><code>debug.wrout()</code></a>.
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="debug:error" id="debug:error"><code>debug.error(msg, ...)</code></a></h3>
+			<p>
+				Prints formatted debug info with <code>ERROR</code> debug
+				level
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="debug:execute" id="debug:execute"><code>debug.execute(lvl, func, ...)</code></a></h3>
+			<p>
+				Executes the specified function if the
+				global debug level is less or equal the specified level.
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="debug:fail" id="debug:fail"><code>debug.fail(msg, ...)</code></a></h3>
+			<p>
+				Prints formatted debug info with <code>FAIL</code> debug level
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="debug:format" id="debug:format"><code>debug.format(lvl, msg, ...)</code></a></h3>
+			<p>
+				Format error message
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="debug:info" id="debug:info"><code>debug.info(msg, ...)</code></a></h3>
+			<p>
+				Prints formatted debug info with <code>INFO</code> debug level
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="debug:print" id="debug:print"><code>debug.print(lvl, msg, ...)</code></a></h3>
+			<p>
+				Prints formatted text if the global debug level
+				is less or equal the specified level.
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="debug:stacktrace" id="debug:stacktrace"><code>debug.stacktrace(debuglevel[, stacklevel])</code></a></h3>
+			<p>
+				Prints a stacktrace starting at
+				the function of the given level on the stack (excluding the
+				<code>stracktrace</code> function itself) if the global debug level is less
+				or equal the specified <code>debuglevel</code>.
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="debug:trace" id="debug:trace"><code>debug.trace(msg, ...)</code></a></h3>
+			<p>
+				Prints formatted debug info with <code>TRACE</code> debug
+				level
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="debug:warn" id="debug:warn"><code>debug.warn(msg, ...)</code></a></h3>
+			<p>
+				Prints formatted debug info with <code>WARN</code> debug level
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="debug:wrout" id="debug:wrout"><code>debug.wrout(...)</code></a></h3>
+			<p>
+				Debug output function, by default
+			</p>
+<pre>
+function(...) out:write(...) end
+</pre>
+			<hr class="page-break" />
+		</div>
+		<div class="node"><h2><a name="tek.lib.exec" id="tek.lib.exec">Exec (v1.0)</a></h2>
+			<div class="definition"><dfn>FUNCTIONS</dfn>
+				<blockquote>
+					<ul>
+						<li style="list-style-type: none">
+							<a href="#Exec:getmsg"><code>Exec.getmsg()</code></a> - Get next message from own task's message queue
+						</li>
+						<li style="list-style-type: none">
+							<a href="#Exec:getname"><code>Exec.getname()</code></a> - Get the own task's name
+						</li>
+						<li style="list-style-type: none">
+							<a href="#Exec:getsignals"><code>Exec.getsignals()</code></a> - Get and clear own task's signals
+						</li>
+						<li style="list-style-type: none">
+							<a href="#Exec:run"><code>Exec.run()</code></a> - Run a Lua function, file, or chunk, returning a task
+						</li>
+						<li style="list-style-type: none">
+							<a href="#Exec:sendmsg"><code>Exec.sendmsg()</code></a> - Send a message to a named task
+						</li>
+						<li style="list-style-type: none">
+							<a href="#Exec:sendport"><code>Exec.sendport()</code></a> - Send a message to a named task and port
+						</li>
+						<li style="list-style-type: none">
+							<a href="#Exec:signal"><code>Exec.signal()</code></a> - Send signals to a named task
+						</li>
+						<li style="list-style-type: none">
+							<a href="#Exec:sleep"><code>Exec.sleep()</code></a> - Suspend own task for a period of time
+						</li>
+						<li style="list-style-type: none">
+							<a href="#Exec:wait"><code>Exec.wait()</code></a> - Suspend own task waiting for signals
+						</li>
+						<li style="list-style-type: none">
+							<a href="#Exec:waitmsg"><code>Exec.waitmsg()</code></a> - Suspend own rask waiting for a message or timeout
+						</li>
+						<li style="list-style-type: none">
+							<a href="#Exec:waittime"><code>Exec.waittime()</code></a> - Suspend own task waiting for signals and timeout
+						</li>
+					</ul>
+				</blockquote>
+			</div>
+			<div class="definition"><dfn>TASKS METHODS</dfn>
+				<blockquote>
+					<ul>
+						<li style="list-style-type: none">
+							<a href="#child:abort"><code>child:abort()</code></a> - Send abortion signal and wait for task completion
+						</li>
+						<li style="list-style-type: none">
+							<a href="#child:join"><code>child:join()</code></a> - Wait for task completion
+						</li>
+						<li style="list-style-type: none">
+							child:sendmsg(msg) - Send a message to a task, see <a href="#Exec:sendmsg"><code>Exec.sendmsg()</code></a> 
+						</li>
+						<li style="list-style-type: none">
+							child:sendport(port, msg) - Send a message to a named port in the
+							task, see <a href="#Exec:sendport"><code>Exec.sendport()</code></a> 
+						</li>
+						<li style="list-style-type: none">
+							child:signal(&#091;sigs&#093;) - Send signals to a task, see <a href="#Exec:signal"><code>Exec.signal()</code></a> 
+						</li>
+						<li style="list-style-type: none">
+							<a href="#child:terminate"><code>child:terminate()</code></a> - Send termination signal and wait for completion
+							of a task
+						</li>
+					</ul>
+				</blockquote>
+				<hr />
+			</div>
+		</div>
+		<div class="node"><h3><a name="child:abort" id="child:abort"><code>child:abort()</code></a></h3>
+			<p>
+				Sends the task the abortion signal <code>&quot;a&quot;</code> and synchronizes
+				on its completion.
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="Exec:getmsg" id="Exec:getmsg"><code>msg, sender = Exec.getmsg()</code></a></h3>
+			<p>
+				Unlinks and returns the next message from the
+				task's message queue, or <strong>nil</strong> if no messages are present. If a message
+				is returned, then the second argument is the name of the task sending the
+				message.
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="Exec:getname" id="Exec:getname"><code>name = Exec.getname()</code></a></h3>
+			<p>
+				Returns the own task's name.
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="Exec:getsignals" id="Exec:getsignals"><code>sig = Exec.getsignals([sigset])</code></a></h3>
+			<p>
+				Gets and clears the signals in <code>sigset</code> 
+				from the own task's signal state, and returns the present signals, one
+				character per signal, concatenated to a string. If no signals are present,
+				returns <strong>nil</strong>. Possible signals and their meanings are
+			</p>
+			<blockquote>
+				<ul>
+					<li style="list-style-type: none">
+						<code>&quot;a&quot;</code> - abort, the Lua program stops due to an error
+					</li>
+					<li style="list-style-type: none">
+						<code>&quot;t&quot;</code> - terminate, the task is asked to quit
+					</li>
+					<li style="list-style-type: none">
+						<code>&quot;c&quot;</code> - child, a child task has finished
+					</li>
+					<li style="list-style-type: none">
+						<code>&quot;m&quot;</code> - message, a message is present at the task
+					</li>
+				</ul>
+			</blockquote>
+			<p>
+				The default for <code>sigset</code> is <code>&quot;tcm&quot;</code>. Notes: The abortion signal cannot
+				be cleared from a task. The termination signal is a request that a task
+				may handle, but it is not enforced.
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="child:join" id="child:join"><code>success, res1, ... = child:join()</code></a></h3>
+			<p>
+				Synchronizes the caller on completion
+				of the child task. The first return value is boolean and indicative of
+				whether the task completed successfully. While suspended in this function
+				and if an error occurs in the child task, an error is propagated to the
+				caller also, unless error propagation is suppressed - see <a href="#Exec:run"><code>Exec.run()</code></a>. If
+				successful, return values from the child task will be converted to
+				strings and returned as additional return values.
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="Exec:run" id="Exec:run"><code>child = Exec.run(what[, arg1[, ...]])</code></a></h3>
+			<p>
+				Tries to launch a Lua script,
+				function, or chunk, and returns a handle on a child task if successful.
+				The first argument can be a string denoting the filename of a Lua script,
+				a Lua function, or a table. If a table is given, either of the following
+				keys in the table is mandatory:
+			</p>
+			<blockquote>
+				<ul>
+					<li>
+						<code>&quot;func&quot;</code>, a function value to run,
+					</li>
+					<li>
+						<code>&quot;filename&quot;</code>, a string denoting the filename of a Lua script,
+					</li>
+					<li>
+						<code>&quot;chunk&quot;</code>, a string value containing a Lua chunk to run.
+					</li>
+				</ul>
+			</blockquote>
+			<p>
+				Optional keys in the table:
+			</p>
+			<blockquote>
+				<ul>
+					<li>
+						<code>&quot;taskname&quot;</code>, a string denoting the name of the task to run.
+						Task names are immutable during runtime and must be unique; the
+						top-level task's implicit name is <code>&quot;main&quot;</code>.
+					</li>
+					<li>
+						<code>&quot;abort&quot;</code>, a boolean to indicate whether errors in the child
+						should be propagated to the parent task. Default: <strong>true</strong> 
+					</li>
+				</ul>
+			</blockquote>
+			<p>
+				Additional arguments are passed to the script, in their given order.
+				Methods on the returned child task handle:
+			</p>
+			<blockquote>
+				<ul>
+					<li>
+						<a href="#child:abort"><code>child:abort()</code></a> - sends abortion signal and synchronizes on completion
+						of the task
+					</li>
+					<li>
+						<a href="#child:join"><code>child:join()</code></a> - synchronizes on completion of the task
+					</li>
+					<li>
+						child:sendmsg(msg) - sends a message to a task, see <a href="#Exec:sendmsg"><code>Exec.sendmsg()</code></a> 
+					</li>
+					<li>
+						child:sendport(port, msg) - Sends a message to a named port in
+						the task, see <a href="#Exec:sendport"><code>Exec.sendport()</code></a> 
+					</li>
+					<li>
+						child:signal(&#091;sigs&#093;) - sends signals to a task, see <a href="#Exec:signal"><code>Exec.signal()</code></a> 
+					</li>
+					<li>
+						<a href="#child:terminate"><code>child:terminate()</code></a> - sends termination signal and synchronizes on
+						completion of the task
+					</li>
+				</ul>
+			</blockquote>
+			<p>
+				Note that the returned child handle is subject to garbage collection. If
+				it gets collected (at the latest when the parent task is ending) and the
+				child task is still running, the child will be sent the abortion signal,
+				causing it to raise an error. This error, like any child error, also gets
+				propagated back to the parent task, unless error propagation is suppressed
+				(see above).
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="Exec:sendmsg" id="Exec:sendmsg"><code>success = Exec.sendmsg(taskname, msg)</code></a></h3>
+			<p>
+				Sends a message to a named task.
+				The special name <code>&quot;*p&quot;</code> addresses the parent task. Returns <strong>true</strong> 
+				if the task was found and the message sent.
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="Exec:sendport" id="Exec:sendport"><code>success = Exec.sendport(taskname, portname, msg)</code></a></h3>
+			<p>
+				Sends the message to
+				the named message port in the named task. Returns <strong>true</strong> if the task
+				and port could be found and the message was sent.
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="Exec:signal" id="Exec:signal"><code>success = Exec.signal(taskname[, sigs])</code></a></h3>
+			<p>
+				Sends signals to a named task,
+				by default the termination signal <code>&quot;t&quot;</code>. The special name <code>&quot;*p&quot;</code> 
+				addresses the parent task. Returns <strong>true</strong> if the task was found and
+				the signals sent. See <a href="#Exec:getsignals"><code>Exec.getsignals()</code></a> for details on the signal format.
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="Exec:sleep" id="Exec:sleep"><code>sig = Exec.sleep([millisecs])</code></a></h3>
+			<p>
+				Suspends the task for the given number of
+				1/1000th seconds. If no timeout is specified, sleeps indefinitely. Returns
+				<strong>nil</strong> when the timeout has expired, or <code>&quot;a&quot;</code> when an abortion signal
+				occurred or was already present at the task.
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="child:terminate" id="child:terminate"><code>success, res1, ... = child:terminate()</code></a></h3>
+			<p>
+				This function is equivalent to
+				<a href="#child:join"><code>child:join()</code></a>, except for that it sends the child task the termination
+				signal <code>&quot;t&quot;</code> before joining.
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="Exec:wait" id="Exec:wait"><code>sig = Exec.wait([sigset])</code></a></h3>
+			<p>
+				Suspends the task waiting for any signals from
+				the specified set. The signals from <code>sigset</code> that occured (or were
+				already present at the task) are returned to the caller - see
+				<a href="#Exec:getsignals"><code>Exec.getsignals()</code></a> for their format. The default signal set to wait for is
+				<code>&quot;tc&quot;</code>. Note: The abortion signal <code>&quot;a&quot;</code> is always included in the set.
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="Exec:waitmsg" id="Exec:waitmsg"><code>msg, sender, sig = Exec.waitmsg([millisecs])</code></a></h3>
+			<p>
+				Suspends the task waiting
+				for the given number of 1/1000th seconds or for a message, and returns the
+				message to the caller. If no timeout is specified, waits indefinitely.
+				Returns <strong>nil</strong> when no message arrives in the given time, or when the
+				cause for returning was that only a signal showed up in the task. The
+				second return value is the name of the sender task, see <a href="#Exec:getmsg"><code>Exec.getmsg()</code></a> for
+				details. The third return value contains the possible signals (<code>&quot;m&quot;</code> 
+				and <code>&quot;a&quot;</code>) that caused this function to return, or <strong>nil</strong> if a
+				timeout occurred.
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="Exec:waittime" id="Exec:waittime"><code>sig = Exec.waittime(millisecs[, sigset])</code></a></h3>
+			<p>
+				Suspends the task waiting for
+				the given number of 1/1000th seconds, or for any signals from the specified
+				set. Signals from <code>sigset</code> that occured (or were already present at
+				the task) are returned to the caller - see <a href="#Exec:getsignals"><code>Exec.getsignals()</code></a> for details.
+				The default signal set to wait for is <code>&quot;tc&quot;</code>. Note: The abortion signal
+				<code>&quot;a&quot;</code> is always included in the signal set.
+			</p>
+			<hr class="page-break" />
+			<p>
+				Document generated on Wed Jan 21 16:39:18 2015 using gendoc.lua version 1.4
+			</p>
+		</div>
+	</body>
+</html>

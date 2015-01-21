@@ -1,0 +1,212 @@
+
+=== Table of contents ===
+
+ - 1. [[#about : About LuaExec]]
+  - 1.1. [[#overview : Overview]]
+  - 1.2. [[#demarcation : What it does and doesn't]]
+  - 1.3. [[#implementation : Implementation details]]
+  - 1.4. [[#status : Status, outlook]]
+  - 1.5. [[#license : License]]
+  - 1.6. [[#authors : Authors]]
+
+ - 2. [[#buildinstall : Installation]]
+  - 2.1. [[#requirements : Requirements]]
+  - 2.2. [[#buildenv : Adjusting the build environment]]
+  - 2.3. [[#builing : Building]]
+  - 2.4. [[#gendoc : Documentation system]]
+
+ - 3. [[#examples : Examples]]
+  - 3.1 [[#tests : Tests]]
+  - 3.2 [[#httpserver : HTTP server]]
+
+=== Reference ===
+
+ * [[manual.html#tek.lib.exec : LuaExec module reference]]
+ * [[manual.html : Complete class and library reference manual]]
+ * [[changes.html : Changelog]]
+ * [[copyright.html : COPYRIGHT]]
+
+---------------------------------------------------------------------
+
+==( about : 1. About LuaExec )==
+
+===( overview : 1.1 Overview )===
+
+LuaExec is yet another take on multitasking for Lua. 
+
+LuaExec is mainly focused on portability and concise semantics.
+It provides multiple contexts of execution in the most abstract
+sense, behaving understandably, platform-independent and unencumbered
+by Lua versions and OS specific details.
+
+===( demarcation : 1.2 What it does and doesn't )===
+
+ * one Lua interpreter per task
+ * data exchange using messages, signals, arguments and return values
+ * Signals: a, t, c, m (abort, terminate, child, message)
+ * allows to synchonize on: task completion, signals, messages
+ * no shared data, no marshalling, this is at the user's discretion
+ * no operating system details (e.g. priorities)
+
+===( implementation : 1.3 Implementation details )===
+
+ * LuaExec is a regular module using only the legal Lua API.
+ * should work with Lua 5.1, 5.2, 5.3, and LuaJIT on POSIX and
+ Windows, if Lua 5.2 and 5.3 are compiled with {{LUA_COMPAT_MODULE}},
+ but not all combinations are fully tested.
+ * Child tasks are subject to garbage collection in their parent
+ that created them. Their underlying OS threads are always joined
+ and ''never killed forcibly'', and all resources requsted in any
+ task are meant to be returned, at the latest through garbage collection.
+ * A Lua error in a task raises a signal, a (abort), that is by
+ default propagated to the parent task.
+ * Child tasks and tasks that spawned children are, by default,
+ supplied with a debug hook that checks for the abortion signal,
+ where it raises an error, signals its parent, and so forth.
+ * The hook can be disabled on a per-task basis. In such tasks
+ abortion strikes only when they are suspended in wait, sleep etc.
+
+===( status : 1.4. Status, outlook )===
+
+This project is a request for comments and most likely an
+unfinished, unpolished, rushed prototype. Additions, suggestions,
+improvements, bug fixes are welcome. Performance was no consideration
+yet. This project is currently about getting semantics right.
+
+This project is a spin-off from the
+[[tekUI project][http://tekui.neoscientists.org/]]. The LuaExec 0.80
+module is fully contained in (but usable independently of) tekUI
+version 1.11. The reason for outsourcing was to have a separate
+testbed and package that is unencumbered by the requirements and
+complexity of graphical input and output. There are a few examples
+in this package that can be run against tekUI, and there are a few
+more tasks examples in the tekUI package.
+
+Given sufficient interest, this library might be extended in a way
+that other Lua libraries can be written against LuaExec's C and Lua
+APIs, so that future Lua sockets, I/O, tasks, message libraries and
+applications can converge and be synchronized on atomically in a
+platform-independent, Lua-ish way.
+
+
+===( license : 1.5. License )===
+
+LuaExec is free software under the same license as Lua itself: It can
+be used for both academic and commercial purposes at no cost. It
+qualifies as Open Source software, and its license is compatible with
+the GPL – see [[copyright][copyright.html]]. Additional components
+are available under a commercial license – see below.
+
+
+===( authors : 1.6. Authors and contributors )===
+
+Authors:
+ - Timm S. Müller <tmueller at schulze-mueller.de>
+
+Open source project website:
+ - http://luaexec.neoscientists.org/
+
+---------------------------------------------------------------------
+
+==( buildinstall : 2. Building and installing )==
+
+===( requirements : 2.1. Requirements )===
+
+Development tools and libraries:
+
+ * Lua 5.1, 5.2, 5.3, LuaJIT 2.x
+ * GCC or LLVM/clang
+ * MinGW (for building for the Windows platform)
+
+Lua 5.2 and 5.3 must be compiled with {{LUA_COMPAT_MODULE}}.
+
+==== External Lua modules ====
+
+LuaExec does not strictly depend on any external Lua modules. The
+following modules are supported:
+
+ * [[LuaFileSystem][http://www.keplerproject.org/luafilesystem/]]
+ for the HTTP server example and documentation generator
+ * [[LuaSocket][http://w3.impa.br/~diego/software/luasocket/]]
+ for the HTTP server example
+ 
+===( buildenv : 2.2. Adjusting the build environment )===
+
+If building fails for you, you may have to adjust the build
+environment, which is located in the {{config}} file on the topmost
+directory level. Supported build tools are {{gmake}} (common under
+Linux) and {{pmake}} (common under FreeBSD). More build options and
+peculiarities are documented in the tekUI package, many of which
+apply to the LuaExec package as well.
+
+==== BSD notes ====
+
+On FreeBSD and NetBSD you need a Lua binary which is linked with the
+{{-pthread}} option, as LuaExec is using multithreaded code in shared
+libraries, which are dynamically loaded by the interpreter. For
+linking on NetBSD uncomment the respective section in the config file.
+
+===( building : 2.3. Building )===
+
+To see all build targets, type
+
+  # make help
+
+The regular build procedure is invoked with
+
+  # make all
+
+===( gendoc : 2.4 Documentation system )===
+
+LuaExec comes with a documentation generator. It is capable of
+generating a function reference and hierarchical class index from
+specially crafted comments in the source code. To regenerate the
+full documentation, invoke
+
+  # make docs
+
+Note that you need
+[[LuaFileSystem][http://www.keplerproject.org/luafilesystem/]] for
+the document generator to process the file system hierarchy.
+
+------------------------------------------------------------------------------- 
+
+==( examples : 3. Examples )==
+
+===( tests : 3.1 Tests )===
+
+Tests are under {{bin/task/}}.
+
+===( httpserver : 3.2 HTTP Server example )===
+
+As an example, a small HTTP server (supporting CGI and Lua pages)
+is included that can be run in the background like this:
+
+  local exec = require "tek.lib.exec"
+  local httpd = exec.run(function()
+    require "tek.class.httpd":new {
+      Listen = arg[1], DocumentRoot = "doc"
+    }:run()
+  end, arg[1] or "localhost:8080")
+  -- ... do something else ...
+  httpd:terminate() -- or httpd:join()
+
+To start it serving its own documentation (default localhost:8080):
+
+  $ bin/webserver.lua host:port
+
+It requires luasocket and lfs, and it supports copas/coxpcall if
+available. Please note that the HTTP/1.1 part of the webserver is just
+a hack to have a funny example to work with. It was more written against
+a browser than against the specification.
+
+Additions, fixes, improvements are welcome.
+
+=== HTTP server test pages ===
+
+ * CGI test page: [[/webserver/testcgi.lua]]
+ * Formtest Lua page: [[/webserver/formtest.lhtml]]
+ * Webserver control Lua page: [[/webserver/control.lhtml]]
+
+(These links should work when you have loaded this document from the
+provided HTTP server.)
