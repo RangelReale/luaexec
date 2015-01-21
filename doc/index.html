@@ -58,7 +58,10 @@
 								2.3. <a href="#builing">Building</a> 
 							</li>
 							<li style="list-style-type: none">
-								2.4. <a href="#gendoc">Documentation system</a> 
+								2.4. <a href="#installation">Installation</a> 
+							</li>
+							<li style="list-style-type: none">
+								2.5. <a href="#gendoc">Documentation system</a> 
 							</li>
 						</ul>
 					</blockquote>
@@ -121,10 +124,10 @@
 						data exchange using messages, signals, arguments and return values
 					</li>
 					<li>
-						Signals: a, t, c, m (abort, terminate, child, message)
+						allows to synchonize on: task completion, signals, messages
 					</li>
 					<li>
-						allows to synchonize on: task completion, signals, messages
+						signals: a, t, c, m (abort, terminate, child, message)
 					</li>
 					<li>
 						no shared data, no marshalling, this is at the user's discretion
@@ -147,22 +150,23 @@
 						but not all combinations are fully tested.
 					</li>
 					<li>
-						Child tasks are subject to garbage collection in their parent
+						child tasks are subject to garbage collection in their parent
 						that created them. Their underlying OS threads are always joined
 						and <em>never killed forcibly</em>, and all resources requsted in any
-						task are meant to be returned, at the latest through garbage collection.
+						task are meant to be returned, at the latest through garbage
+						collection.
 					</li>
 					<li>
-						A Lua error in a task raises a signal, a (abort), that is by
+						a Lua error in a task raises a signal, a (abort), that is by
 						default propagated to the parent task.
 					</li>
 					<li>
-						Child tasks and tasks that spawned children are, by default,
+						child tasks and tasks that spawned children are, by default,
 						supplied with a debug hook that checks for the abortion signal,
 						where it raises an error, signals its parent, and so forth.
 					</li>
 					<li>
-						The hook can be disabled on a per-task basis. In such tasks
+						the hook can be disabled on a per-task basis. In such tasks
 						abortion strikes only when they are suspended in wait, sleep etc.
 					</li>
 				</ul>
@@ -170,10 +174,10 @@
 		</div>
 		<div class="node"><h3><a name="status" id="status">1.4. Status, outlook</a></h3>
 			<p>
-				This project is a request for comments and most likely an
-				unfinished, unpolished, rushed prototype. Additions, suggestions,
-				improvements, bug fixes are welcome. Performance was no consideration
-				yet. This project is currently about getting semantics right.
+				This project is a prototype and request for comments. Additions,
+				suggestions, improvements, bug fixes are likely needed and welcome.
+				Performance was no consideration yet. In its current stage it is
+				about getting semantics right.
 			</p>
 			<p>
 				This project is a spin-off from the
@@ -220,6 +224,16 @@
 				<ul>
 					<li style="list-style-type: none">
 						<a href="http://luaexec.neoscientists.org/">http://luaexec.neoscientists.org/</a> 
+					</li>
+				</ul>
+			</blockquote>
+			<p>
+				Online source code repository:
+			</p>
+			<blockquote>
+				<ul>
+					<li style="list-style-type: none">
+						<a href="http://hg.neoscientists.org/luaexec">http://hg.neoscientists.org/luaexec</a> 
 					</li>
 				</ul>
 			</blockquote>
@@ -283,7 +297,8 @@
 				On FreeBSD and NetBSD you need a Lua binary which is linked with the
 				<code>-pthread</code> option, as LuaExec is using multithreaded code in shared
 				libraries, which are dynamically loaded by the interpreter. For
-				linking on NetBSD uncomment the respective section in the config file.
+				linking on NetBSD uncomment the respective section in the config
+				file.
 			</p>
 		</div>
 		<div class="node"><h3><a name="building" id="building">2.3. Building</a></h3>
@@ -300,7 +315,38 @@
 # make all
 </pre>
 		</div>
-		<div class="node"><h3><a name="gendoc" id="gendoc">2.4 Documentation system</a></h3>
+		<div class="node"><h3><a name="installation" id="installation">2.4. Installation</a></h3>
+			<p>
+				A system-wide installation of LuaExec is not strictly required. Once
+				it is built, it can be worked with and developed against, as long as
+				you stay in the top-level directory of the distribution; all required
+				modules will be found if programs are started from there.
+			</p>
+			<p>
+				If staying in the top-level directory is not desirable, then LuaExec
+				must be installed globally. By default, the installation paths are
+			</p>
+			<blockquote>
+				<ul>
+					<li style="list-style-type: none">
+						<code>/usr/local/lib/lua/5.1</code> 
+					</li>
+					<li style="list-style-type: none">
+						<code>/usr/local/share/lua/5.1</code> 
+					</li>
+				</ul>
+			</blockquote>
+			<p>
+				It is not unlikely that this is different from what is common for
+				your operating system, distribution or development needs, so be sure
+				to adjust these paths in the <code>config</code> file. The installation is
+				conveniently invoked with
+			</p>
+<pre>
+# sudo make install
+</pre>
+		</div>
+		<div class="node"><h3><a name="gendoc" id="gendoc">2.5 Documentation system</a></h3>
 			<p>
 				LuaExec comes with a documentation generator. It is capable of
 				generating a function reference and hierarchical class index from
@@ -343,13 +389,13 @@ httpd:terminate() -- or httpd:join()
 				To start it serving its own documentation (default localhost:8080):
 			</p>
 <pre>
-$ bin/webserver.lua host:port
+$ bin/webserver.lua &#091;host:port&#093;
 </pre>
 			<p>
 				It requires luasocket and lfs, and it supports copas/coxpcall if
-				available. Please note that the HTTP/1.1 part of the webserver is just
-				a hack to have a funny example to work with. It was more written against
-				a browser than against the specification.
+				available. Please note that the HTTP/1.1 part of the webserver is
+				just a hack to have a funny example to work with. It was more written
+				against a browser than against the specification.
 			</p>
 			<p>
 				Additions, fixes, improvements are welcome.
@@ -357,6 +403,10 @@ $ bin/webserver.lua host:port
 			<h3>
 				HTTP server test pages
 			</h3>
+			<p>
+				These links should work when you have loaded this document from the
+				provided HTTP server:
+			</p>
 			<blockquote>
 				<ul>
 					<li>
@@ -370,10 +420,6 @@ $ bin/webserver.lua host:port
 					</li>
 				</ul>
 			</blockquote>
-			<p>
-				(These links should work when you have loaded this document from the
-				provided HTTP server.)
-			</p>
 		</div>
 	</body>
 </html>

@@ -13,7 +13,8 @@
   - 2.1. [[#requirements : Requirements]]
   - 2.2. [[#buildenv : Adjusting the build environment]]
   - 2.3. [[#builing : Building]]
-  - 2.4. [[#gendoc : Documentation system]]
+  - 2.4. [[#installation : Installation]]
+  - 2.5. [[#gendoc : Documentation system]]
 
  - 3. [[#examples : Examples]]
   - 3.1 [[#tests : Tests]]
@@ -26,6 +27,7 @@
  * [[changes.html : Changelog]]
  * [[copyright.html : COPYRIGHT]]
 
+ 
 ---------------------------------------------------------------------
 
 ==( about : 1. About LuaExec )==
@@ -43,8 +45,8 @@ by Lua versions and OS specific details.
 
  * one Lua interpreter per task
  * data exchange using messages, signals, arguments and return values
- * Signals: a, t, c, m (abort, terminate, child, message)
  * allows to synchonize on: task completion, signals, messages
+ * signals: a, t, c, m (abort, terminate, child, message)
  * no shared data, no marshalling, this is at the user's discretion
  * no operating system details (e.g. priorities)
 
@@ -54,24 +56,25 @@ by Lua versions and OS specific details.
  * should work with Lua 5.1, 5.2, 5.3, and LuaJIT on POSIX and
  Windows, if Lua 5.2 and 5.3 are compiled with {{LUA_COMPAT_MODULE}},
  but not all combinations are fully tested.
- * Child tasks are subject to garbage collection in their parent
+ * child tasks are subject to garbage collection in their parent
  that created them. Their underlying OS threads are always joined
  and ''never killed forcibly'', and all resources requsted in any
- task are meant to be returned, at the latest through garbage collection.
- * A Lua error in a task raises a signal, a (abort), that is by
+ task are meant to be returned, at the latest through garbage
+ collection.
+ * a Lua error in a task raises a signal, a (abort), that is by
  default propagated to the parent task.
- * Child tasks and tasks that spawned children are, by default,
+ * child tasks and tasks that spawned children are, by default,
  supplied with a debug hook that checks for the abortion signal,
  where it raises an error, signals its parent, and so forth.
- * The hook can be disabled on a per-task basis. In such tasks
+ * the hook can be disabled on a per-task basis. In such tasks
  abortion strikes only when they are suspended in wait, sleep etc.
 
 ===( status : 1.4. Status, outlook )===
 
-This project is a request for comments and most likely an
-unfinished, unpolished, rushed prototype. Additions, suggestions,
-improvements, bug fixes are welcome. Performance was no consideration
-yet. This project is currently about getting semantics right.
+This project is a prototype and request for comments. Additions,
+suggestions, improvements, bug fixes are likely needed and welcome.
+Performance was no consideration yet. In its current stage it is
+about getting semantics right.
 
 This project is a spin-off from the
 [[tekUI project][http://tekui.neoscientists.org/]]. The LuaExec 0.80
@@ -87,7 +90,6 @@ that other Lua libraries can be written against LuaExec's C and Lua
 APIs, so that future Lua sockets, I/O, tasks, message libraries and
 applications can converge and be synchronized on atomically in a
 platform-independent, Lua-ish way.
-
 
 ===( license : 1.5. License )===
 
@@ -106,6 +108,10 @@ Authors:
 Open source project website:
  - http://luaexec.neoscientists.org/
 
+Online source code repository:
+ - http://hg.neoscientists.org/luaexec
+
+ 
 ---------------------------------------------------------------------
 
 ==( buildinstall : 2. Building and installing )==
@@ -144,7 +150,8 @@ apply to the LuaExec package as well.
 On FreeBSD and NetBSD you need a Lua binary which is linked with the
 {{-pthread}} option, as LuaExec is using multithreaded code in shared
 libraries, which are dynamically loaded by the interpreter. For
-linking on NetBSD uncomment the respective section in the config file.
+linking on NetBSD uncomment the respective section in the config
+file.
 
 ===( building : 2.3. Building )===
 
@@ -156,7 +163,27 @@ The regular build procedure is invoked with
 
   # make all
 
-===( gendoc : 2.4 Documentation system )===
+===( installation : 2.4. Installation )===
+
+A system-wide installation of LuaExec is not strictly required. Once
+it is built, it can be worked with and developed against, as long as
+you stay in the top-level directory of the distribution; all required
+modules will be found if programs are started from there.
+
+If staying in the top-level directory is not desirable, then LuaExec
+must be installed globally. By default, the installation paths are
+
+ - {{/usr/local/lib/lua/5.1}}
+ - {{/usr/local/share/lua/5.1}}
+
+It is not unlikely that this is different from what is common for
+your operating system, distribution or development needs, so be sure
+to adjust these paths in the {{config}} file. The installation is
+conveniently invoked with
+
+  # sudo make install
+  
+===( gendoc : 2.5 Documentation system )===
 
 LuaExec comes with a documentation generator. It is capable of
 generating a function reference and hierarchical class index from
@@ -169,7 +196,8 @@ Note that you need
 [[LuaFileSystem][http://www.keplerproject.org/luafilesystem/]] for
 the document generator to process the file system hierarchy.
 
-------------------------------------------------------------------------------- 
+
+---------------------------------------------------------------------
 
 ==( examples : 3. Examples )==
 
@@ -193,20 +221,21 @@ is included that can be run in the background like this:
 
 To start it serving its own documentation (default localhost:8080):
 
-  $ bin/webserver.lua host:port
+  $ bin/webserver.lua [host:port]
 
 It requires luasocket and lfs, and it supports copas/coxpcall if
-available. Please note that the HTTP/1.1 part of the webserver is just
-a hack to have a funny example to work with. It was more written against
-a browser than against the specification.
+available. Please note that the HTTP/1.1 part of the webserver is
+just a hack to have a funny example to work with. It was more written
+against a browser than against the specification.
 
 Additions, fixes, improvements are welcome.
 
 === HTTP server test pages ===
 
+These links should work when you have loaded this document from the
+provided HTTP server:
+
  * CGI test page: [[/webserver/testcgi.lua]]
  * Formtest Lua page: [[/webserver/formtest.lhtml]]
  * Webserver control Lua page: [[/webserver/control.lhtml]]
 
-(These links should work when you have loaded this document from the
-provided HTTP server.)
