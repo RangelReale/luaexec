@@ -563,6 +563,11 @@ tek_lib_exec_run_dispatch(struct THook *hook, TAPTR task, TTAG msg)
 		{
 			TAPTR atom;
 			if (!ctx->taskname)
+			{
+				sprintf(ctx->atomname, "task.task: %p", task);
+				ctx->taskname = ctx->atomname + TEK_LIB_TASK_ATOMNAME_OFFSET;
+			}
+			if (!ctx->taskname)
 				return TTRUE;
 			atom = TLockAtom(ctx->atomname, 
 				TATOMF_CREATE | TATOMF_NAME | TATOMF_TRY);

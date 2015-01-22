@@ -1,6 +1,10 @@
 
 == LuaExec Changelog ==
 
+ * If a task has no name, the implied name is now "task: 0x<address>"
+ so that replies can be sent to unnamed senders
+ * Some additions and corrections in the documentation
+
 === 0.80: ===
 
  * added

@@ -3,7 +3,6 @@ local exec = require "tek.lib.exec"
 local c = exec.run(function()
 	local exec = require "tek.lib.exec"
 	local c = exec.run({ 
-		taskname = "grandchild", 
 		func = function()
 			local exec = require "tek.lib.exec"
 			assert(exec.sendmsg("main", "yo"))
@@ -13,12 +12,13 @@ local c = exec.run(function()
 	c:join()
 end)
 print(exec.getname())
-print(exec.waitmsg())
-assert(exec.sendmsg("grandchild", "africa"))
+local msg, sender = exec.waitmsg()
+print(msg, sender)
+assert(exec.sendmsg(sender, "africa"))
 c:join()
 
 --[[
-task: 0xee3b48
-yo      grandchild      m
-africa  task: 0xee3b48  m
+task: 0x132db78
+yo      task: 0x7f8900001220
+africa  task: 0x132db78 m
 ]]-- 

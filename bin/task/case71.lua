@@ -1,20 +1,20 @@
 #!/usr/bin/env lua
 local exec = require "tek.lib.exec"
 local c = exec.run({ 
-	taskname = "hello", 
+	taskname = "child", 
 	func = function()
 		local exec = require "tek.lib.exec"
-		exec.sendmsg("main", "hello")
+		assert(exec.sendmsg("main", "yo"))
 		print(exec.waitmsg())
 	end
 })
 print(exec.getname())
 print(exec.waitmsg())
-exec.sendmsg("hello", "africa")
+assert(exec.sendmsg("child", "africa"))
 c:join()
 
 --[[
-task: 0x20abef8
-hello   hello   m
-africa  task: 0x20abef8 m
+task: 0xba8928
+yo      child   m
+africa  task: 0xba8928  m
 ]]-- 

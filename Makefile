@@ -4,11 +4,6 @@ include config
 .PHONY: all libs modules install clean help distclean docs release
 
 all: libs modules
-	@echo
-	@echo "all built - you can invoke 'make run' now,"
-	@echo "to start a webserver on localhost:8080 that"
-	@echo "serves this program's own documentation."
-	@echo "Required for this are lfs and luasocket."
 
 libs:
 	cd src && $(MAKE) $@

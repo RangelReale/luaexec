@@ -105,13 +105,13 @@
 		</div>
 		<div class="node"><h3><a name="overview" id="overview">1.1 Overview</a></h3>
 			<p>
-				LuaExec is yet another take on multitasking for Lua.
+				LuaExec is another take on multitasking for Lua.
 			</p>
 			<p>
 				LuaExec is mainly focused on general applicability, simplicity and
 				concise semantics. It provides multiple contexts of execution in the
 				most abstract sense, behaving understandably, platform-independently
-				and unencumbered by Lua versions and OS specific details.
+				and unencumbered by OS specific details.
 			</p>
 		</div>
 		<div class="node"><h3><a name="demarcation" id="demarcation">1.2 What it does and doesn't</a></h3>
@@ -121,8 +121,8 @@
 						runs a Lua interpreter per task
 					</li>
 					<li>
-						is recursive: A child task can require the <code>tek.lib.exec</code> 
-						module again and run child tasks again
+						is recursive, a child task can itself require the module, run
+						child tasks, and see all other tasks
 					</li>
 					<li>
 						data exchange using messages, signals, arguments and return values
@@ -152,9 +152,8 @@
 						LuaExec is a regular module using only the legal Lua API.
 					</li>
 					<li>
-						It should work with Lua 5.1, 5.2, 5.3, and LuaJIT on POSIX and
-						Windows, if Lua 5.2 and 5.3 are compiled with <code>LUA_COMPAT_MODULE</code>,
-						but not all combinations are fully tested.
+						It should work with Lua 5.1, 5.2, 5.3, and LuaJIT2.0 on POSIX and
+						Windows. Not all combinations are fully tested yet.
 					</li>
 					<li>
 						Child tasks are subject to garbage collection in their parent
@@ -184,8 +183,33 @@
 				This project is a prototype and request for comments. Additions,
 				suggestions, improvements, bug fixes are likely needed and welcome.
 				Performance was no consideration yet. In its current stage LuaExec
-				is about getting semantics right.
+				is about getting semantics right. Some considerations:
 			</p>
+			<blockquote>
+				<ul>
+					<li>
+						Because LuaExec is recursive in that child tasks can create new
+						tasks that can see other tasks (and can be seen by other tasks),
+						LuaExec could easily provide a shared data or registry mechanism.
+						This is currently being investigated.
+					</li>
+					<li>
+						LuaExec's protocol and API should remain (or become) transparent
+						as to whether it is implemented as threads or processes, or as
+						threads or processes on different hosts.
+					</li>
+					<li>
+						Support for serialization or marshalling
+					</li>
+					<li>
+						Given sufficient interest, this library might be extended in a way
+						that other Lua modules and libraries can be written against
+						LuaExec's C and Lua APIs, so that future Lua sockets and I/O,
+						libraries and applications can converge and be synchronized on
+						atomically in a platform-independent, Lua-ish way.
+					</li>
+				</ul>
+			</blockquote>
 			<p>
 				This project is a spin-off from the
 				<a href="http://tekui.neoscientists.org/">tekUI project</a>. The LuaExec 0.80
@@ -195,13 +219,6 @@
 				complexity of graphical input and output. There are a few examples
 				in this package that can be run against tekUI, and there are a few
 				more tasks examples in the tekUI package.
-			</p>
-			<p>
-				Given sufficient interest, this library might be extended in a way
-				that other Lua modules and libraries can be written against LuaExec's
-				C and Lua APIs, so that future Lua sockets and I/O, libraries and
-				applications can converge and be synchronized on atomically in a
-				platform-independent, Lua-ish way.
 			</p>
 		</div>
 		<div class="node"><h3><a name="license" id="license">1.5. License</a></h3>
@@ -259,9 +276,6 @@
 		<div class="node"><h2><a name="buildinstall" id="buildinstall">2. Building and installing</a></h2>
 		</div>
 		<div class="node"><h3><a name="requirements" id="requirements">2.1. Requirements</a></h3>
-			<p>
-				Development tools:
-			</p>
 			<blockquote>
 				<ul>
 					<li>
@@ -276,6 +290,7 @@
 				</ul>
 			</blockquote>
 			<p>
+				Only for the included webserver and documentation generator:
 				Lua 5.2 and 5.3 must be compiled with <code>LUA_COMPAT_MODULE</code>.
 			</p>
 			<h4>
@@ -387,8 +402,8 @@
 		</div>
 		<div class="node"><h3><a name="httpserver" id="httpserver">3.2 HTTP Server example</a></h3>
 			<p>
-				As an example, a small HTTP server (supporting CGI and Lua pages)
-				is included that can be run in the background like this:
+				As an example, a small HTTP server is included that can be run in
+				the background like this:
 			</p>
 <pre>
 local exec = require &quot;tek.lib.exec&quot;
@@ -404,17 +419,14 @@ httpd:terminate() -- or httpd:join()
 				To start it serving LuaExec's documentation (default localhost:8080):
 			</p>
 <pre>
-$ bin/webserver.lua &#091;host:port&#093;
+# bin/webserver.lua &#091;host:port&#093;
 </pre>
 			<p>
-				It requires luasocket and lfs, and it supports copas/coxpcall if
-				available. Please note that the HTTP/1.1 part of the webserver is
-				just a hack to have a funny example to work with. It was more written
-				against a browser than against the specification.
-			</p>
-			<p>
-				As for the rest of the package, fixes, improvements and suggestions
-				are welcome.
+				It requires luasocket and lfs. The server itself is not
+				multithreaded, but it supports copas/coxpcall if available. Please
+				note that the HTTP/1.1 part of the webserver is just a hack to have
+				a funny example to work with. It was more written against a browser
+				than against the specification.
 			</p>
 			<h3>
 				HTTP server test pages
