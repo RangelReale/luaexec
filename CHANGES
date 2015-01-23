@@ -1,6 +1,10 @@
 
 == LuaExec Changelog ==
 
+=== 0.81: ===
+
+ * quickstart tutorial added
+ * fixed severe bugs in sender name retrieval
  * POSIX/Windows HAL setsignal(): sigmask was not applied to new signals,
  corrected
  * HTTP server: is no longer installed, http:terminate() now works,

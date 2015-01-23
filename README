@@ -140,7 +140,7 @@ Online source code repository:
  * GCC or LLVM/clang
  * MinGW for building for the Windows platform
 
-Only for the webserver example and documentation generator:
+Only for the HTTP example and documentation generator:
 Lua 5.2 and 5.3 must be compiled with {{LUA_COMPAT_MODULE}}.
 
 ==== External Lua modules ====
@@ -258,7 +258,7 @@ written against specifications. It is included as an example.
 
 ==( tutorial : 4. Quickstart tutorial )==
 
-For the first part of this tutorial, please use Lua in interactive
+For the first part of this tutorial, please run Lua in interactive
 mode, because this is going to be fun, and hopefully instructive!
 Start off by requiring the LuaExec module:
 
@@ -289,7 +289,7 @@ Seems reasonable. Now let's have it do some work:
 
   > exec.run(function() while true do end end)
   
-So far, so good. Do you notice some change in the behavior of your
+So far, so good. Do you notice some change in the behaviour of your
 computer? Probably not. Ok, then try it again...
 
   > exec.run(function() while true do end end)
@@ -298,7 +298,7 @@ Still nothing? Then try this:
   
   > for i = 1, 4 do exec.run(function() while true do end end) end
 
-Some fans spinning up possibly? 
+Wait a moment. Some fans spinning up possibly? 
 
 I think it's time to quit interactive mode now rather quickly.
 I hope your Lua interpreter has proper interactive mode, so that
@@ -330,6 +330,7 @@ Press CTRL-D now (not CTRL-C):
   stack traceback:
           stdin:1: in function <stdin:1>
           [C]: ?
+  #
 
 Each of the tasks started above running an infinite loop should now
 receive an abortion signal from Lua closing down and performing
@@ -339,10 +340,10 @@ aspect of LuaExec. (And by dissipating heat we just may have helped
 the universe to approach its destiny a little sooner, but this
 remains to be seen.)
 
-The next examples are performed in scripts. To reiterate
-what was said above, run the following script. You'll get a stack trace from the child that was running,
-because it did not finish voluntarily when the main program
-was ending:
+The next examples are performed in scripts. To reiterate what was
+said above, run the following script. You'll get a stack trace from
+the child, because it does not finish voluntarily when the main
+program is ending:
 
   local exec = require "tek.lib.exec"
   exec.run(function() 
@@ -352,29 +353,32 @@ was ending:
   luatask: received abort signal
   stack traceback:
           bin/tutorial.lua:3: in function <bin/tutorial.lua:2>
-          [C]: ?
+          [C]: in ?
 
-On the other hand, if it ''does'' shut down voluntarily, everything
+On the other hand, if it does shut down voluntarily, everything
 remains silent:
 
   local exec = require "tek.lib.exec"
   exec.run(function() 
-    print "hello"
   end)
   exec.sleep(100)
   =>
   
 I have added the last line to drive home that message, because your
 friggin' operating system could theoretically decide to postpone
-execution of the child task a bit, and we ended up with an error
-and stracktrace nonetheless.
+execution of the child task just long enough that we ended up with
+an error and a stracktrace nonetheless. (Told in confidence, this is
+not true, ''this'' example wouldn't raise a signal even without
+sleeping in the parent, but this is an implementation detail of
+LuaExec that shouldn't make it into a tutorial. We may get back to
+this later.)
 
 Note that although this is the plushy world of Lua, and LuaExec tries
 its best to hide the nastiness of multithreaded programming from you,
 trailing behind a bunch of dangling threads is by no means an
 encouraged programming technique. What ''is'' encouraged is that you
-synchronize on the end of the thread. This also allows you to take
-delivery of return values:
+synchronize your program on the completion of each task. This also
+allows you to take delivery of return values:
 
   local exec = require "tek.lib.exec"
   local c = exec.run(function()
@@ -389,33 +393,121 @@ Especially in the Lua world this seems to be hotly debated -
 
 In computations, actually, it is difficult to put them to good use,
 but matters improved a bit in that regard, with projects like
-SETI@home, digging for bitcoins, and so on. There are enough
-CPU cycles to be wasted in fun computations, especially if you run
-them in a scripting language. Wouldn't it be a pity if we couldn't
-saturate eight cores from a small Lua script?
+SETI@home, mining bitcoins, and so on. There are enough CPU cycles
+to be wasted in fun computations, especially if you run them in a
+scripting language. Wouldn't it be a pity if we couldn't saturate
+eight cores from a one-liner in Lua?
 
-Irony aside, threads have always been useful for long-running
-tasks, regardless of their computational demand, and they are
-even more useful if they are bound to I/O operations that are precisely
-''not'' computationally demanding, but stuttering, jerky, and
-unpredictable, and spend the most time waiting, but it is impossible
-to tell for how long, and if the wait will even turn out a result. 
-Also note that from a computer's viewpoint a human 
-can be seen as a very demanding I/O device, making it a good candidate
-for a thread to deal with that (but that may be by far not the most
-popular take on that matter).
+Irony aside, threads have always been useful for long-running tasks,
+regardless of their computational demand, and they are even more
+useful if they are bound to I/O operations that are precisely ''not''
+demanding computationally, but stuttering, jerky, and unpredictable,
+and spend most of their time waiting, but it is impossible to tell
+for how long, and if the wait will even turn out a result. Also note
+that from a computer's viewpoint a human can be seen as a very
+demanding I/O device, making it a good candidate for a thread or two
+to deal with, although that may not be the most popular take on that
+matter.
 
-That's where computing leaves academia and hits the sad reality:
-Imagine you were writing a virus scanner with a graphical user interface
-(you wouldn't want to write such a software, for all the money in
-the world, I know, this is just an example) - would you start a task
-each time the "scan" button is clicked? No, you would start that task
-when the application starts, put it to sleep, and in it wait for orders,
-that is what you'd do.
-Or rather, that's what I'd do, and I may be completely off the
-track, because I would allow the user to enter the configuration
-panels and other sections of the program even while such a scan is in
-progress:
+So in I/O, that's where computing leaves academia and hits the hard
+cobbles of reality: 
+Imagine you were writing a virus scanner with a graphical user
+interface (you wouldn't want to write such a software, for all the
+money in the world, I know! This is just an example) - would you
+start a task each time the "scan" button is clicked? No, you would
+start that task when the application starts, put it to sleep, and in
+it wait for orders, that is what you'd do.
+Or rather, that's what I'd do, and I may be completely off the track,
+because I would allow the user to enter the configuration panels and
+other sections of the program even while such a scan is in progress.
+
+First let's see how we can start and stop such an application worker:
+
+  local exec = require "tek.lib.exec"
+  local c = exec.run(function()
+    local exec = require "tek.lib.exec"
+    print "worker running"
+    print(exec.wait())
+    return "worker done"
+  end)
+  exec.sleep(1000)
+  print(c:terminate())
+  =>
+  worker running
+  t
+  true    worker done
+
+There is a new function to end the child task, terminate, and
+there is another new function, wait, that by sheer chance waits
+until the main program calls terminate on the child. What wait
+really does, however, is that it waits until it receives any one or
+more signals from a set of possible signals, and returns the ones
+received to the caller. The signal '''t''' is included in the default
+set, and important enough to be supported by a function on the other
+end, terminate, that really does nothing but to send the
+signal '''t''', and then to behave exactly like join. So this
+would be equivalent to the last line in the example above:
+
+  c:signal("t")
+  print(c:join())
+
+There are more signals, but the t signal is the most gentle one, with
+the predefined meaning "pretty please, could you quit?". There is
+about nothing that would happen if you received a t signal and did
+not react on it, and there is nothing that keeps you from assigning
+it a different meaning.
+
+By now it has probably dawned upon the Unix connaisseurs that
+LuaExec signals have got '''nil''' to do with Unix signals, although
+there are some artifical similarities in their names. The meanings
+reserved to them are completely different.
+
+Rowdies and bullies among you (who have the exceptional attention
+span to be still following this tutorial) surely want to see the
+brutal termination of a task. We can't help but to admit that this
+has to be mentioned, so pay attention, we will do this only once,
+because we wouldn't want to further support your urge to destroy
+things:
+
+  local exec = require "tek.lib.exec"
+  local c = exec.run(function()
+    local exec = require "tek.lib.exec"
+    for i = 1, 1000000000 do end
+    exec.wait()
+  end)
+  exec.sleep(1000)
+  c:abort()
+  =>
+  luatask: received abort signal
+  stack traceback:
+          bin/tutorial.lua:4: in function <bin/tutorial.lua:2>
+          [C]: in ?
+
+It really doesn't matter what the child task is doing, as long as
+it is in Lua code or a LuaExec function, it will be interrupted.
+Once again the {{abort}} method is just the short form for sending a
+signal, in this case '''a''' for abort, and then to {{join}}. But
+why would you want to call abort at all? In exchange you are getting
+an ugly stack trace that you somehow need to hide from your audience
+whom you wanted to convince of using your program, and this is even
+done automatically for you when your program ends and if there are
+still tasks running. We leave it at that it is a rather exceptional
+thing to do.
+
+Signals are important, even essential, but their number is
+extremely limited, only four in fact, of which we know two already,
+and of which there is only one free for the user, '''t'''. There
+could be more signals, user signals 1, 2, 3, {{SIGGUMBO}}, you name
+them. But we asked ourselves, why even stop there? No, we have kept
+the number of signals at the bare minimum so that you won't have to
+ponder needlessly on freaked out meanings that could be assigned to
+them.
+
+Because, there is a tool that is so much more powerful, based on,
+but transcending signals.
+This tool is called messages. Messages can be any data, you can
+reserve all meaning in the world to them, and with them, you can
+even do without signals completely:
 
   local exec = require "tek.lib.exec"
   local c = exec.run(function()
@@ -434,5 +526,149 @@ progress:
   exec.sleep(1000)
   c:sendmsg("quit")
   c:join()
+  =>
+  your orders please!
+  scan    main
+  quit    main
 
-To be continued...
+You can send any string (even ones containing unprintable data)
+around in messages, and not only that, you will also know who has
+sent you a message, in this example the main program, {{"main"}}.
+
+By receiving the sender together with the message you can write a
+worker that is completely ignorant of the rest of the world, it just
+takes the next order, executes it, and sends the result back to the
+originator. Our first real worker will compute 10 random numbers
+between 1 and 10:
+
+  local exec = require "tek.lib.exec"
+  local c = exec.run(function()
+    local exec = require "tek.lib.exec"
+    while true do
+      local order, sender = exec.waitmsg()
+      if order == "getrandom" then
+        exec.sendmsg(sender, math.random(1, 10))
+      elseif order == "quit" then
+        break
+      end
+    end
+  end)
+  for i = 1, 10 do
+    c:sendmsg("getrandom")
+    print(exec.waitmsg())
+  end
+  c:sendmsg("quit")
+  c:join()
+  =>
+  8       task: 0x7f4e60000af0    m
+  3       task: 0x7f4e60000af0    m
+  7       task: 0x7f4e60000af0    m
+  7       task: 0x7f4e60000af0    m
+  9       task: 0x7f4e60000af0    m
+  1       task: 0x7f4e60000af0    m
+  3       task: 0x7f4e60000af0    m
+  7       task: 0x7f4e60000af0    m
+  2       task: 0x7f4e60000af0    m
+  5       task: 0x7f4e60000af0    m
+
+Some commentary is probably advised. The first column in the output
+contains the returned random number, the second the name of the
+sender, as we already know from the previous example.
+Because here, the sender is the child task and the child task has no
+name, LuaExec has given it some identification.
+
+The third return value from waitmsg (that we haven't seen yet) is the
+signal (if any) that caused waitmsg to return, and by this we also
+get to know the third signal, '''m''' for message, which indicates
+that, you guessed it, the task has received a message. Please note,
+however, that it is entirely possible that there is no signal that
+causes waitmsg to return (in which case the third return value will
+be '''nil'''), because returning the signal to the caller also
+clears it from the task, and there may have been more messages
+arrived in the meantime, in which case waitmsg will return
+immediately.
+
+To conclude this introductory tutorial, didn't we say eight cores?
+
+Well, of course none of these exercises in futility have got anything
+to do with eight cores, but here's the same worker again (this time
+we have given it a name), and eight other tasks requesting random
+numbers from it:
+
+  local exec = require "tek.lib.exec"
+  local c = exec.run({ taskname = "worker", func = function()
+    local exec = require "tek.lib.exec"
+    while true do
+      local order, sender = exec.waitmsg()
+      if order == "getrandom" then
+        exec.sendmsg(sender, math.random(1, 10))
+      elseif order == "quit" then
+        break
+      end
+    end
+  end })
+  for i = 1, 10 do
+    exec.run(function()
+      local exec = require "tek.lib.exec"
+      for i = 1, 10 do
+        exec.sendmsg("worker", "getrandom")
+        print(exec.waitmsg())
+      end
+    end)
+  end
+  exec.sleep(1000)
+  c:sendmsg("quit")
+  c:join()
+  =>
+  1       worker  m
+  10      worker  nil
+  510     worker          workerm
+  m
+  8       worker  m
+  [...]
+
+You may find the output a bit scrambed sometimes, like I do on my
+computer. This is harmless and due to the fact that multiple tasks
+are writing to standard output at the same time. The exact behaviour
+may vary between different operating systems, but even if you don't
+get a scrambled output on your computer, you may get the point.
+
+Of course we can still do worse than that. To expose this tutorial
+to ridicule once and for all, in the final example the results will
+be passed on to the main task, which prints them, so the main task
+becomes the stdout worker, in a sense:
+
+  local exec = require "tek.lib.exec"
+  local c = exec.run({ taskname = "worker", func = function()
+    local exec = require "tek.lib.exec"
+    while true do
+      local order, sender = exec.waitmsg()
+      if order == "getrandom" then
+        exec.sendmsg(sender, math.random(1, 10))
+      elseif order == "quit" then
+        break
+      end
+    end
+  end })
+  for i = 1, 10 do
+    exec.run(function()
+      local exec = require "tek.lib.exec"
+      for i = 1, 10 do
+        exec.sendmsg("worker", "getrandom")
+        local number = exec.waitmsg()
+        exec.sendmsg("*p", number)
+      end
+    end)
+  end
+  for i = 1, 100 do
+    print(exec.waitmsg())
+  end
+  c:sendmsg("quit")
+  c:join()
+
+Besides prettier output, here we have another feature of LuaExec,
+addressing a task by the name {{"*p"}}, which sends a message to a
+task's parent task.
+
+--------------------------------------------------------------------
+
