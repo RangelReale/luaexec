@@ -4,16 +4,16 @@
 --	(C) by Timm S. Mueller <tmueller@schulze-mueller.de>
 --
 --	IMPLEMENTS::
---		CGI:beginPost(req)
---		CGI:beginUpload(req, fname)
---		CGI:doRequest(req)
---		CGI:endPost(req, stream)
---		CGI:endRequest(req, protocolstatus, appstatus)
---		CGI:endUpload(req, fname, fh)
---		CGI:haveParams(req)
---		CGI:serve()
---		CGI:updatePost(req, stream)
---		CGI:updateUpload(req, fname, fh, buf)
+--		- CGI:beginPost()
+--		- CGI:beginUpload()
+--		- CGI:doRequest()
+--		- CGI:endPost()
+--		- CGI:endRequest()
+--		- CGI:endUpload()
+--		- CGI:haveParams()
+--		- CGI:serve()
+--		- CGI:updatePost()
+--		- CGI:updateUpload()
 --
 --	OVERRIDES::
 --		- Class.new()
@@ -103,10 +103,8 @@ end
 -------------------------------------------------------------------------------
 --	success, msg = endRequest(request[, protstatus[, appstatus]]):
 --	Confirms the end of a CGI request. Optionally, the application can
---	signify a protocol status (by default, FCGI_REQUEST_COMPLETE) and an
---	application status (by default, 0). See
---	[[CGI protocol][http://www.fastcgi.com/devkit/doc/fcgi-spec.html]]
---	specification for details.
+--	signify a protocol status (e.g., FCGI_REQUEST_COMPLETE) and an
+--	application status (by default, 0).
 --	The result will be true, indicating success, or nil followed by an
 --	error message.
 -------------------------------------------------------------------------------

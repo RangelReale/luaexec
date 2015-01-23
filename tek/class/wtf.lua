@@ -86,12 +86,12 @@ end
 --	the combined environment needs to be intercepted for passing it back to
 --	the request, f.ex.:
 --			WTF:new { Environment = _G,
--- 				createEnvironment = function(self, req)
--- 					local env = WTF.createEnvironment(self, req)
--- 					req:setHTMLEnvironment(env)
--- 					return env
--- 				end
--- 			}:doRequest(req)
+--			  createEnvironment = function(self, req)
+--			    local env = WTF.createEnvironment(self, req)
+--			    req:setHTMLEnvironment(env)
+--			      return env
+--			  end
+--			}:doRequest(req)
 -------------------------------------------------------------------------------
 
 function WTF:createEnvironment(req)

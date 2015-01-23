@@ -6,7 +6,6 @@
 -------------------------------------------------------------------------------
 
 local db = require "tek.lib.debug"
-local exec = require "tek.lib.exec"
 local _, lfs = pcall(require, "lfs")
 local Server = require "tek.class.server"
 local socket = require "socket"
@@ -106,7 +105,8 @@ function HTTPD.new(class, self)
 		pairs = pairs,
 		print = function(...)
 			for i = 1, select('#', ...) do
-				stderr:write((i > 1 and "\t" or "") .. tostring(select(i, ...)))
+				stderr:write((i > 1 and "\t" or "") .. 
+					tostring(select(i, ...)))
 			end
 			stderr:write("\n") 
 		end,
@@ -207,8 +207,6 @@ function HTTPD:doFileRequest(fd, req)
 	local c = { }
 	local fname = self:docToRealPath(req.uri)
 	if lfs.attributes(fname, "mode") == "directory" then
--- 		insert(c, "<html><body>")
--- 		insert(c, "Directory listing</br>\n")
 		local di = self:getDirIterator(req.uri)
 		if di then
 			for entry in di do
@@ -339,7 +337,7 @@ function HTTPD:doHandler(fd, req, handler, hnd_name)
 end
 
 -------------------------------------------------------------------------------
---	serveClient(fd): This function serves an incoming client request on the
+--	serveClient(fd) - This function serves an incoming client request on the
 --	specified socket.
 -------------------------------------------------------------------------------
 
@@ -409,22 +407,11 @@ function HTTPD:serveClient(fd)
 end
 
 -------------------------------------------------------------------------------
---	serviceInterval()
--------------------------------------------------------------------------------
-
-function HTTPD:serviceInterval()
-	if exec.getsignals("ta") then -- terminate or abort
-		self:setServerState("break")
-	end
-end
-
--------------------------------------------------------------------------------
 --	run()
 -------------------------------------------------------------------------------
 
 function HTTPD:run()
 	self:bind()
-	self:registerInterval(1, self.serviceInterval, self)
 	self:registerServer(self.ServerSocket, self.ServerName,
 		self.serveClient, self)
 	local res = Server.run(self)

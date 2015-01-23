@@ -13,6 +13,14 @@
 		<blockquote>
 			<ul>
 				<li>
+					POSIX/Windows HAL <a href="manual.html#setsignal"><code>setsignal()</code></a>: sigmask was not applied to new signals,
+					corrected
+				</li>
+				<li>
+					HTTP server: is no longer installed, <a href="manual.html#http:terminate"><code>http:terminate()</code></a> now works,
+					cleaned up to more clearly demonstrate signal usage
+				</li>
+				<li>
 					If a task has no name, the implied name is now &quot;task: 0x&lt;address&gt;&quot;
 					so that replies can be sent to unnamed senders
 				</li>

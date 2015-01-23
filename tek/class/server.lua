@@ -9,7 +9,7 @@
 --		Server ${subclasses(Server)}
 --
 --		This class implements a server.
---		If copas is used, this server provides nonblocking async I/O.
+--		If copas is used, this server provides nonblocking multiplexed I/O.
 --
 --	IMPLEMENTS::
 --		- Server:registerClient() - Register a client socket
@@ -31,7 +31,6 @@
 local db = require "tek.lib.debug"
 local have_copas, copas = pcall(require, "copas")
 local have_coxpcall, coxpcall = pcall(require, "coxpcall")
-local have_exec, exec = pcall(require, "tek.lib.exec")
 local Class = require "tek.class"
 local socket = require "socket"
 
@@ -81,7 +80,18 @@ function Server.new(class, self)
 	self.RegisteredFDs = { } -- records of registered recvfds, indexed by fd
 	self.RegisteredNames = { } -- registered file descriptors, by name
 	self.Status = "init"
-	return Class.new(class, self)
+	self = Class.new(class, self)
+	self:registerInterval(1, self.checkAbort, self)
+	return self
+end
+
+-------------------------------------------------------------------------------
+--	checkAbort(): Override this function to check for termination of the
+--	server. Since we cannot suspend in I/O and signals or messages at the
+--	same time, we must check for termination periodically. A pity
+-------------------------------------------------------------------------------
+
+function Server:checkAbort()
 end
 
 -------------------------------------------------------------------------------
@@ -169,7 +179,7 @@ function Server:freeId(id)
 end
 
 -------------------------------------------------------------------------------
---	id = registerClient(fd, name, func[, data[, ...]])
+--	id = registerClient(fd, name, func[, data[, ...]]): Register client
 -------------------------------------------------------------------------------
 
 function Server:registerClient(fd, name, func, data, ...)
@@ -227,7 +237,7 @@ function Server:registerFD(type, fd, name, func, data, ...)
 end
 
 -------------------------------------------------------------------------------
---	id = registerInterval(interval_in_seconds, func):
+--	id = registerInterval(interval_in_seconds, func): Register interval
 -------------------------------------------------------------------------------
 
 function Server:registerInterval(interval, func, data)
@@ -239,7 +249,7 @@ end
 
 -------------------------------------------------------------------------------
 --	registerOnce(delay, func[, data]): Register a function to be called in the
---	server main loop
+--	server main loop once, after the given delay
 -------------------------------------------------------------------------------
 
 function Server:registerOnce(delay, func, data)
@@ -254,7 +264,7 @@ function Server:registerOnce(delay, func, data)
 end
 
 -------------------------------------------------------------------------------
---	id = registerServer(fd, name, func[, data[, ...]])
+--	id = registerServer(fd, name, func[, data[, ...]]): Register server socket
 -------------------------------------------------------------------------------
 
 function Server:registerServer(fd, name, func, data, ...)
@@ -262,7 +272,7 @@ function Server:registerServer(fd, name, func, data, ...)
 end
 
 -------------------------------------------------------------------------------
---	removeInterval(id)
+--	removeInterval(id): Remove an interval by id
 -------------------------------------------------------------------------------
 
 function Server:removeInterval(id)
@@ -273,7 +283,7 @@ function Server:removeInterval(id)
 end
 
 -------------------------------------------------------------------------------
---	status = run()
+--	status = run(): Run server
 -------------------------------------------------------------------------------
 
 function Server:run()
@@ -374,14 +384,4 @@ function Server:unregister(name)
 		end
 	end
 	error("could not find fd")
-end
-
--------------------------------------------------------------------------------
---	putMsg(msg): Send message (to parent)
--------------------------------------------------------------------------------
-
-function Server:putMsg(msg)
-	if have_exec then
-		exec.sendmsg("*p", msg)
-	end
 end

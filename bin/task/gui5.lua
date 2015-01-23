@@ -1,7 +1,8 @@
 #!/usr/bin/env lua
 local exec = require "tek.lib.exec"
 
-local c1 = exec.run(function()
+local c = exec.run(function()
+	local exec = require "tek.lib.exec"
 	local ui = require "tek.ui"
 	ui.Application:new
 	{
@@ -31,11 +32,13 @@ local c1 = exec.run(function()
 	}:run()
 end)
 
-exec.sleep(1000)
-c1:sendport("ui", "Hello")
-exec.sleep(1000)
-c1:sendport("ui", "world!")
-exec.sleep(2000)
-c1:sendport("ui", "Quitting now...")
-exec.sleep(2000)
-c1:terminate()
+if not exec.waittime(1000, "cm") then
+	local msgs = { "Hello", "world!", "quitting now..." }
+	for i = 1, #msgs do
+		if not c:sendport("ui", msgs[i]) then
+			break
+		end
+		exec.waittime(1000, "cm")
+	end
+end
+c:terminate()

@@ -1,6 +1,10 @@
 
 == LuaExec Changelog ==
 
+ * POSIX/Windows HAL setsignal(): sigmask was not applied to new signals,
+ corrected
+ * HTTP server: is no longer installed, http:terminate() now works,
+ cleaned up to more clearly demonstrate signal usage
  * If a task has no name, the implied name is now "task: 0x<address>"
  so that replies can be sent to unnamed senders
  * Some additions and corrections in the documentation

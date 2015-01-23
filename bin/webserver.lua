@@ -11,7 +11,16 @@ local httpd = exec.run( {
 	func = function()
 		local exec = require "tek.lib.exec"
 		local server = require "tek.class.httpd":new { 
-			Listen = arg[1], DocumentRoot = "doc" }
+			Listen = arg[1], DocumentRoot = "doc",
+			checkAbort = function(self)
+				if exec.getsignals("ta") then
+					self:setServerState("break")
+				end
+			end,
+			putMsg = function(self, msg)
+				exec.sendmsg("*p", msg)
+			end
+		}
 		exec.sendmsg("*p", "running")
 		server:run()
 	end }, 
@@ -31,5 +40,5 @@ while true do
 		print "I have nothing to do..."
 	end
 end
-httpd:join()
+httpd:terminate()
 print "webserver exited gracefully."

@@ -3,16 +3,6 @@
 --	tek.class.fifo
 --	(C) by Timm S. Mueller <tmueller@schulze-mueller.de>
 --
---	OVERVIEW::
---		Implements a simple FIFO
---
---	MEMBERS::
---
---	IMPLEMENTS::
---
---	OVERRIDES::
---		- Class.new()
---
 -------------------------------------------------------------------------------
 
 local db = require "tek.lib.debug"

@@ -13,17 +13,19 @@
 --			Maximum size allowed for POST, in bytes. Default: 1000000
 --
 --	IMPLEMENTS::
---		- HTTPRequest.decodeURL - Decodes an URL-encoded string
---		- HTTPRequest:getEnv(key) - Gets a server environment variable
+--		- HTTPRequest.decodeURL() - Decodes an URL-encoded string
+--		- HTTPRequest:getEnv() - Gets a server environment variable
 --		- HTTPRequest:getArgs() - Gets table of request arguments
 --		- HTTPRequest:getDocument() - Gets table of document properties
+--		- HTTPRequest:getGlobal() - Gets persistent, global data from server
+--		- HTTPRequest:insertArgString() - Insert arguments, e.g. QUERY_STRING
+--		- HTTPRequest:setEnv() - Sets an server environment variable
 --
 --	OVERRIDES::
 --		- Class.new()
 --
 -------------------------------------------------------------------------------
 
--- local host = require "schulzemueller.host"
 local lfs = require "lfs"
 local Class = require "tek.class"
 local assert = assert
@@ -38,7 +40,7 @@ local tonumber = tonumber
 local type = type
 
 module("tek.class.httprequest", tek.class)
-_VERSION = "HTTPRequest 2.0"
+_VERSION = "HTTPRequest 2.1"
 local HTTPRequest = _M
 Class:newClass(HTTPRequest)
 
@@ -100,28 +102,11 @@ function HTTPRequest.new(class, self)
 end
 
 -------------------------------------------------------------------------------
---	val = getHTTPVariable(key): Get variable
+--	val = getHTTPVariable(key) - Retrieve server variable from the outside
 -------------------------------------------------------------------------------
 
 function HTTPRequest:getHTTPVariable(key)
 	return getenv(key)
-end
-
--------------------------------------------------------------------------------
---	clone: Get an instance copy of the request
--------------------------------------------------------------------------------
-
-function HTTPRequest:clone()
-	local req = self:getClass():new()
-	local env = { }
-	for key, val in pairs(self.Environment) do
-		env[key] = val
-	end
-	req.DefaultIndex = self.DefaultIndex
-	req.Environment = setmetatable(env, envmt)
-	req.MaxContentLength = self.MaxContentLength	
-	req.write = self.write
-	return req
 end
 
 -------------------------------------------------------------------------------
@@ -133,7 +118,7 @@ function HTTPRequest:write(s)
 end
 
 -------------------------------------------------------------------------------
---	val = getEnv(key): Get environment (server) variable
+--	val = getEnv(key): Get server environment variable
 -------------------------------------------------------------------------------
 
 function HTTPRequest:getEnv(key)
@@ -173,7 +158,8 @@ function HTTPRequest:getArgs()
 end
 
 -------------------------------------------------------------------------------
---	insertArgString(string): Insert raw arguments string
+--	insertArgString(string): Insert raw arguments string, e.g. from
+--	{{QUERY_STRING}}
 -------------------------------------------------------------------------------
 
 function HTTPRequest:insertArgString(s)
@@ -181,7 +167,8 @@ function HTTPRequest:insertArgString(s)
 end
 
 -------------------------------------------------------------------------------
---	document = getDocument(): Get table of document properties
+--	document = getDocument(): Get table of document properties, containing
+--	e.g. the keys ScriptPath and ScriptFile
 -------------------------------------------------------------------------------
 
 function HTTPRequest:getDocument()
@@ -211,7 +198,8 @@ function HTTPRequest:getDocument()
 end
 
 -------------------------------------------------------------------------------
---	global = getGlobal()
+--	global = getGlobal(): Get HTTP Request global state, containing e.g.
+--	internals of the server application.
 -------------------------------------------------------------------------------
 
 function HTTPRequest:getGlobal()

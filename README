@@ -20,6 +20,8 @@
   - 3.1 [[#tests : Tests]]
   - 3.2 [[#httpserver : HTTP server]]
 
+ - 4. [[#tutorial : Quickstart tutorial]]
+
 === Reference ===
 
  * [[manual.html#tek.lib.exec : LuaExec module reference]]
@@ -37,7 +39,7 @@
 LuaExec is another take on multitasking for Lua. 
 
 LuaExec is mainly focused on general applicability, simplicity and
-concise semantics. It provides multiple contexts of execution in the
+concise semantics. It provides multiple threads of execution in the
 most abstract sense, behaving understandably, platform-independently
 and unencumbered by OS specific details.
 
@@ -138,7 +140,7 @@ Online source code repository:
  * GCC or LLVM/clang
  * MinGW for building for the Windows platform
 
-Only for the included webserver and documentation generator:
+Only for the webserver example and documentation generator:
 Lua 5.2 and 5.3 must be compiled with {{LUA_COMPAT_MODULE}}.
 
 ==== External Lua modules ====
@@ -220,8 +222,9 @@ Tests are under {{bin/task/}}.
 
 ===( httpserver : 3.2 HTTP Server example )===
 
-As an example, a small HTTP server is included that can be run in
-the background like this:
+One of the use cases LuaExec was developed against was to supply
+a regular Lua application with an inbuilt HTTP server. It can be
+run in the background like this:
 
   local exec = require "tek.lib.exec"
   local httpd = exec.run(function()
@@ -237,12 +240,8 @@ To start it serving LuaExec's documentation (default localhost:8080):
   # bin/webserver.lua [host:port]
 
 It requires luasocket and lfs. The server itself is not
-multithreaded, but it supports copas/coxpcall if available. Please
-note that the HTTP/1.1 part of the webserver is just a hack to have
-a funny example to work with. It was more written against a browser
-than against the specification.
-
-=== HTTP server test pages ===
+multithreaded, due to limitations of the current Lua library
+ecosystem, but it supports copas/coxpcall if available. 
 
 These links should work when you have loaded this document from the
 provided HTTP server:
@@ -251,3 +250,189 @@ provided HTTP server:
  * Formtest Lua page: [[/webserver/formtest.lhtml]]
  * Webserver control Lua page: [[/webserver/control.lhtml]]
 
+Please note that the HTTP/1.1 part of the server was not thoroughly
+written against specifications. It is included as an example.
+
+
+---------------------------------------------------------------------
+
+==( tutorial : 4. Quickstart tutorial )==
+
+For the first part of this tutorial, please use Lua in interactive
+mode, because this is going to be fun, and hopefully instructive!
+Start off by requiring the LuaExec module:
+
+  # lua
+  > exec = require "tek.lib.exec"
+
+What's our task's name?
+
+  > print(exec.getname())
+  => main
+
+Sleep a second (1000 milliseconds):
+
+  > exec.sleep(1000)
+
+Now to starting a new task:
+
+  > exec.run(function() end)
+  =>
+  
+Nothing happened? Well, it probably just ran and exited.
+Let's have it do something:
+
+  > exec.run(function() print "hello" end)
+  => hello
+
+Seems reasonable. Now let's have it do some work:
+
+  > exec.run(function() while true do end end)
+  
+So far, so good. Do you notice some change in the behavior of your
+computer? Probably not. Ok, then try it again...
+
+  > exec.run(function() while true do end end)
+
+Still nothing? Then try this:
+  
+  > for i = 1, 4 do exec.run(function() while true do end end) end
+
+Some fans spinning up possibly? 
+
+I think it's time to quit interactive mode now rather quickly.
+I hope your Lua interpreter has proper interactive mode, so that
+it is orderly closed down and you see the intended effect.
+Press CTRL-D now (not CTRL-C):
+
+  > 
+  luatask: received abort signal
+  stack traceback:
+          stdin:1: in function <stdin:1>
+          [C]: ?
+  luatask: received abort signal
+  stack traceback:
+          stdin:1: in function <stdin:1>
+          [C]: ?
+  luatask: received abort signal
+  stack traceback:
+          stdin:1: in function <stdin:1>
+          [C]: ?
+  luatask: received abort signal
+  stack traceback:
+          stdin:1: in function <stdin:1>
+          [C]: ?
+  luatask: received abort signal
+  stack traceback:
+          stdin:1: in function <stdin:1>
+          [C]: ?
+  luatask: received abort signal
+  stack traceback:
+          stdin:1: in function <stdin:1>
+          [C]: ?
+
+Each of the tasks started above running an infinite loop should now
+receive an abortion signal from Lua closing down and performing
+garbage collection. This causes each task to raise an error, and
+consequently to report that error. This is a very important
+aspect of LuaExec. (And by dissipating heat we just may have helped
+the universe to approach its destiny a little sooner, but this
+remains to be seen.)
+
+The next examples are performed in scripts. To reiterate
+what was said above, run the following script. You'll get a stack trace from the child that was running,
+because it did not finish voluntarily when the main program
+was ending:
+
+  local exec = require "tek.lib.exec"
+  exec.run(function() 
+    while true do end
+  end)
+  => 
+  luatask: received abort signal
+  stack traceback:
+          bin/tutorial.lua:3: in function <bin/tutorial.lua:2>
+          [C]: ?
+
+On the other hand, if it ''does'' shut down voluntarily, everything
+remains silent:
+
+  local exec = require "tek.lib.exec"
+  exec.run(function() 
+    print "hello"
+  end)
+  exec.sleep(100)
+  =>
+  
+I have added the last line to drive home that message, because your
+friggin' operating system could theoretically decide to postpone
+execution of the child task a bit, and we ended up with an error
+and stracktrace nonetheless.
+
+Note that although this is the plushy world of Lua, and LuaExec tries
+its best to hide the nastiness of multithreaded programming from you,
+trailing behind a bunch of dangling threads is by no means an
+encouraged programming technique. What ''is'' encouraged is that you
+synchronize on the end of the thread. This also allows you to take
+delivery of return values:
+
+  local exec = require "tek.lib.exec"
+  local c = exec.run(function()
+    return "successful", "indeed"
+  end)
+  print(c:join())
+  =>
+  true    successful      indeed
+
+Next we should ask ourselves what threads are actually good for.
+Especially in the Lua world this seems to be hotly debated -
+
+In computations, actually, it is difficult to put them to good use,
+but matters improved a bit in that regard, with projects like
+SETI@home, digging for bitcoins, and so on. There are enough
+CPU cycles to be wasted in fun computations, especially if you run
+them in a scripting language. Wouldn't it be a pity if we couldn't
+saturate eight cores from a small Lua script?
+
+Irony aside, threads have always been useful for long-running
+tasks, regardless of their computational demand, and they are
+even more useful if they are bound to I/O operations that are precisely
+''not'' computationally demanding, but stuttering, jerky, and
+unpredictable, and spend the most time waiting, but it is impossible
+to tell for how long, and if the wait will even turn out a result. 
+Also note that from a computer's viewpoint a human 
+can be seen as a very demanding I/O device, making it a good candidate
+for a thread to deal with that (but that may be by far not the most
+popular take on that matter).
+
+That's where computing leaves academia and hits the sad reality:
+Imagine you were writing a virus scanner with a graphical user interface
+(you wouldn't want to write such a software, for all the money in
+the world, I know, this is just an example) - would you start a task
+each time the "scan" button is clicked? No, you would start that task
+when the application starts, put it to sleep, and in it wait for orders,
+that is what you'd do.
+Or rather, that's what I'd do, and I may be completely off the
+track, because I would allow the user to enter the configuration
+panels and other sections of the program even while such a scan is in
+progress:
+
+  local exec = require "tek.lib.exec"
+  local c = exec.run(function()
+    local exec = require "tek.lib.exec"
+    print "your orders please!"
+    while true do
+      local order, sender = exec.waitmsg()
+      print(order, sender)
+      if order == "quit" then
+        break
+      end
+    end
+  end)
+  exec.sleep(1000)
+  c:sendmsg("scan")
+  exec.sleep(1000)
+  c:sendmsg("quit")
+  c:join()
+
+To be continued...

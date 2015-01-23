@@ -79,6 +79,9 @@
 						</ul>
 					</blockquote>
 				</li>
+				<li style="list-style-type: none">
+					4. <a href="#tutorial">Quickstart tutorial</a> 
+				</li>
 			</ul>
 		</blockquote>
 		<h3>
@@ -109,7 +112,7 @@
 			</p>
 			<p>
 				LuaExec is mainly focused on general applicability, simplicity and
-				concise semantics. It provides multiple contexts of execution in the
+				concise semantics. It provides multiple threads of execution in the
 				most abstract sense, behaving understandably, platform-independently
 				and unencumbered by OS specific details.
 			</p>
@@ -290,7 +293,7 @@
 				</ul>
 			</blockquote>
 			<p>
-				Only for the included webserver and documentation generator:
+				Only for the webserver example and documentation generator:
 				Lua 5.2 and 5.3 must be compiled with <code>LUA_COMPAT_MODULE</code>.
 			</p>
 			<h4>
@@ -402,8 +405,9 @@
 		</div>
 		<div class="node"><h3><a name="httpserver" id="httpserver">3.2 HTTP Server example</a></h3>
 			<p>
-				As an example, a small HTTP server is included that can be run in
-				the background like this:
+				One of the use cases LuaExec was developed against was to supply
+				a regular Lua application with an inbuilt HTTP server. It can be
+				run in the background like this:
 			</p>
 <pre>
 local exec = require &quot;tek.lib.exec&quot;
@@ -423,14 +427,9 @@ httpd:terminate() -- or httpd:join()
 </pre>
 			<p>
 				It requires luasocket and lfs. The server itself is not
-				multithreaded, but it supports copas/coxpcall if available. Please
-				note that the HTTP/1.1 part of the webserver is just a hack to have
-				a funny example to work with. It was more written against a browser
-				than against the specification.
+				multithreaded, due to limitations of the current Lua library
+				ecosystem, but it supports copas/coxpcall if available.
 			</p>
-			<h3>
-				HTTP server test pages
-			</h3>
 			<p>
 				These links should work when you have loaded this document from the
 				provided HTTP server:
@@ -448,6 +447,225 @@ httpd:terminate() -- or httpd:join()
 					</li>
 				</ul>
 			</blockquote>
+			<p>
+				Please note that the HTTP/1.1 part of the server was not thoroughly
+				written against specifications. It is included as an example.
+			</p>
+			<hr />
 		</div>
+		<div class="node"><h2><a name="tutorial" id="tutorial">4. Quickstart tutorial</a></h2>
+			<p>
+				For the first part of this tutorial, please use Lua in interactive
+				mode, because this is going to be fun, and hopefully instructive!
+				Start off by requiring the LuaExec module:
+			</p>
+<pre>
+# lua
+&gt; exec = require &quot;tek.lib.exec&quot;
+</pre>
+			<p>
+				What's our task's name?
+			</p>
+<pre>
+&gt; print(exec.getname())
+=&gt; main
+</pre>
+			<p>
+				Sleep a second (1000 milliseconds):
+			</p>
+<pre>
+&gt; exec.sleep(1000)
+</pre>
+			<p>
+				Now to starting a new task:
+			</p>
+<pre>
+&gt; exec.run(function() end)
+=&gt;
+</pre>
+			<p>
+				Nothing happened? Well, it probably just ran and exited.
+				Let's have it do something:
+			</p>
+<pre>
+&gt; exec.run(function() print &quot;hello&quot; end)
+=&gt; hello
+</pre>
+			<p>
+				Seems reasonable. Now let's have it do some work:
+			</p>
+<pre>
+&gt; exec.run(function() while true do end end)
+</pre>
+			<p>
+				So far, so good. Do you notice some change in the behavior of your
+				computer? Probably not. Ok, then try it again...
+			</p>
+<pre>
+&gt; exec.run(function() while true do end end)
+</pre>
+			<p>
+				Still nothing? Then try this:
+			</p>
+<pre>
+&gt; for i = 1, 4 do exec.run(function() while true do end end) end
+</pre>
+			<p>
+				Some fans spinning up possibly?
+			</p>
+			<p>
+				I think it's time to quit interactive mode now rather quickly.
+				I hope your Lua interpreter has proper interactive mode, so that
+				it is orderly closed down and you see the intended effect.
+				Press CTRL-D now (not CTRL-C):
+			</p>
+<pre>
+&gt;
+luatask: received abort signal
+stack traceback:
+        stdin:1: in function &lt;stdin:1&gt;
+        &#091;C&#093;: ?
+luatask: received abort signal
+stack traceback:
+        stdin:1: in function &lt;stdin:1&gt;
+        &#091;C&#093;: ?
+luatask: received abort signal
+stack traceback:
+        stdin:1: in function &lt;stdin:1&gt;
+        &#091;C&#093;: ?
+luatask: received abort signal
+stack traceback:
+        stdin:1: in function &lt;stdin:1&gt;
+        &#091;C&#093;: ?
+luatask: received abort signal
+stack traceback:
+        stdin:1: in function &lt;stdin:1&gt;
+        &#091;C&#093;: ?
+luatask: received abort signal
+stack traceback:
+        stdin:1: in function &lt;stdin:1&gt;
+        &#091;C&#093;: ?
+</pre>
+		</div>
+	<p>
+		Each of the tasks started above running an infinite loop should now
+		receive an abortion signal from Lua closing down and performing
+		garbage collection. This causes each task to raise an error, and
+		consequently to report that error. This is a very important
+		aspect of LuaExec. (And by dissipating heat we just may have helped
+		the universe to approach its destiny a little sooner, but this
+		remains to be seen.)
+	</p>
+	<p>
+		The next examples are performed in scripts. To reiterate
+		what was said above, run the following script. You'll get a stack trace from the child that was running,
+		because it did not finish voluntarily when the main program
+		was ending:
+	</p>
+<pre>
+local exec = require &quot;tek.lib.exec&quot;
+exec.run(function()
+  while true do end
+end)
+=&gt;
+luatask: received abort signal
+stack traceback:
+        bin/tutorial.lua:3: in function &lt;bin/tutorial.lua:2&gt;
+        &#091;C&#093;: ?
+</pre>
+	<p>
+		On the other hand, if it <em>does</em> shut down voluntarily, everything
+		remains silent:
+	</p>
+<pre>
+local exec = require &quot;tek.lib.exec&quot;
+exec.run(function()
+  print &quot;hello&quot;
+end)
+exec.sleep(100)
+=&gt;
+</pre>
+	<p>
+		I have added the last line to drive home that message, because your
+		friggin' operating system could theoretically decide to postpone
+		execution of the child task a bit, and we ended up with an error
+		and stracktrace nonetheless.
+	</p>
+	<p>
+		Note that although this is the plushy world of Lua, and LuaExec tries
+		its best to hide the nastiness of multithreaded programming from you,
+		trailing behind a bunch of dangling threads is by no means an
+		encouraged programming technique. What <em>is</em> encouraged is that you
+		synchronize on the end of the thread. This also allows you to take
+		delivery of return values:
+	</p>
+<pre>
+local exec = require &quot;tek.lib.exec&quot;
+local c = exec.run(function()
+  return &quot;successful&quot;, &quot;indeed&quot;
+end)
+print(c:join())
+=&gt;
+true    successful      indeed
+</pre>
+	<p>
+		Next we should ask ourselves what threads are actually good for.
+		Especially in the Lua world this seems to be hotly debated -
+	</p>
+	<p>
+		In computations, actually, it is difficult to put them to good use,
+		but matters improved a bit in that regard, with projects like
+		SETI@home, digging for bitcoins, and so on. There are enough
+		CPU cycles to be wasted in fun computations, especially if you run
+		them in a scripting language. Wouldn't it be a pity if we couldn't
+		saturate eight cores from a small Lua script?
+	</p>
+	<p>
+		Irony aside, threads have always been useful for long-running
+		tasks, regardless of their computational demand, and they are
+		even more useful if they are bound to I/O operations that are precisely
+		<em>not</em> computationally demanding, but stuttering, jerky, and
+		unpredictable, and spend the most time waiting, but it is impossible
+		to tell for how long, and if the wait will even turn out a result.
+		Also note that from a computer's viewpoint a human
+		can be seen as a very demanding I/O device, making it a good candidate
+		for a thread to deal with that (but that may be by far not the most
+		popular take on that matter).
+	</p>
+	<p>
+		That's where computing leaves academia and hits the sad reality:
+		Imagine you were writing a virus scanner with a graphical user interface
+		(you wouldn't want to write such a software, for all the money in
+		the world, I know, this is just an example) - would you start a task
+		each time the &quot;scan&quot; button is clicked? No, you would start that task
+		when the application starts, put it to sleep, and in it wait for orders,
+		that is what you'd do.
+		Or rather, that's what I'd do, and I may be completely off the
+		track, because I would allow the user to enter the configuration
+		panels and other sections of the program even while such a scan is in
+		progress:
+	</p>
+<pre>
+local exec = require &quot;tek.lib.exec&quot;
+local c = exec.run(function()
+  local exec = require &quot;tek.lib.exec&quot;
+  print &quot;your orders please!&quot;
+  while true do
+    local order, sender = exec.waitmsg()
+    print(order, sender)
+    if order == &quot;quit&quot; then
+      break
+    end
+  end
+end)
+exec.sleep(1000)
+c:sendmsg(&quot;scan&quot;)
+exec.sleep(1000)
+c:sendmsg(&quot;quit&quot;)
+c:join()
+</pre>
+	<p>
+		To be continued...
+	</p>
 	</body>
 </html>

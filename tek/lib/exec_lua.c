@@ -51,7 +51,7 @@ local Exec = _M
 #define TEK_LIB_EXEC_CLASSNAME "tek.lib.exec*"
 #define TEK_LIB_TASK_CLASSNAME "tek.lib.exec.task*"
 #define TEK_LIB_EXECBASE_REGNAME "TExecBase*"
-#define TEL_LIB_BASETASK_ATOMNAME "task.main"
+#define TEK_LIB_BASETASK_ATOMNAME "task.main"
 #define TEK_LIB_TASKNAME_LEN 64
 #define TEK_LIB_TASK_ATOMNAME "task.%s"
 #define TEK_LIB_TASK_ATOMNAME_OFFSET	5
@@ -102,7 +102,7 @@ static int tek_lib_exec_base_gc(lua_State *L)
 	struct LuaExecTask *lexec = luaL_checkudata(L, 1, TEK_LIB_EXEC_CLASSNAME);
 	if (lexec->exec)
 	{
-		TAPTR atom = TExecLockAtom(lexec->exec, TEL_LIB_BASETASK_ATOMNAME, 
+		TAPTR atom = TExecLockAtom(lexec->exec, TEK_LIB_BASETASK_ATOMNAME, 
 			TATOMF_NAME);
 		TExecUnlockAtom(lexec->exec, atom, TATOMF_DESTROY);
 		TDestroy((struct THandle *) lexec->task);
@@ -567,8 +567,6 @@ tek_lib_exec_run_dispatch(struct THook *hook, TAPTR task, TTAG msg)
 				sprintf(ctx->atomname, "task.task: %p", task);
 				ctx->taskname = ctx->atomname + TEK_LIB_TASK_ATOMNAME_OFFSET;
 			}
-			if (!ctx->taskname)
-				return TTRUE;
 			atom = TLockAtom(ctx->atomname, 
 				TATOMF_CREATE | TATOMF_NAME | TATOMF_TRY);
 			if (!atom)
@@ -1189,13 +1187,9 @@ TMODENTRY int luaopen_tek_lib_exec(lua_State *L)
 		lexec->taskname = lexec->atomname + TEK_LIB_TASK_ATOMNAME_OFFSET;
 	}
 	else
-	{
-		char buf[64];
-		sprintf(buf, "task: %p", lexec);
-		lexec->taskname = tek_lib_exec_taskname(lexec->atomname, buf);
-	}
+		lexec->taskname = tek_lib_exec_taskname(lexec->atomname, "main");
 
-	TAPTR atom = TLockAtom(TEL_LIB_BASETASK_ATOMNAME, 
+	TAPTR atom = TLockAtom(TEK_LIB_BASETASK_ATOMNAME, 
 		TATOMF_CREATE | TATOMF_NAME | TATOMF_TRY);
 	if (atom)
 	{
