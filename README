@@ -85,9 +85,9 @@ is about getting semantics right. Some considerations:
  LuaExec could easily provide a shared data or registry mechanism.
  This is currently being investigated. 
 
- * LuaExec's protocol and API should remain (or become) transparent
- as to whether it is implemented as threads or processes, or as
- threads or processes on different hosts.
+ * LuaExec's protocol and API should be transparent as to whether
+ it is implemented as threads or processes, or as threads or
+ processes on different hosts.
  
  * Support for serialization or marshalling
 
@@ -251,7 +251,8 @@ provided HTTP server:
  * Webserver control Lua page: [[/webserver/control.lhtml]]
 
 Please note that the HTTP/1.1 part of the server was not thoroughly
-written against specifications. It is included as an example.
+written against specifications. It is included as an example and may
+get improved and become a separate package some day.
 
 
 ---------------------------------------------------------------------
@@ -298,7 +299,7 @@ Still nothing? Then try this:
   
   > for i = 1, 4 do exec.run(function() while true do end end) end
 
-Wait a moment. Some fans spinning up possibly? 
+Wait a moment. Some fans spinning up possibly?
 
 I think it's time to quit interactive mode now rather quickly.
 I hope your Lua interpreter has proper interactive mode, so that
@@ -342,7 +343,7 @@ remains to be seen.)
 
 The next examples are performed in scripts. To reiterate what was
 said above, run the following script. You'll get a stack trace from
-the child, because it does not finish voluntarily when the main
+the child, because it has not finished voluntarily when the main
 program is ending:
 
   local exec = require "tek.lib.exec"
@@ -355,7 +356,7 @@ program is ending:
           bin/tutorial.lua:3: in function <bin/tutorial.lua:2>
           [C]: in ?
 
-On the other hand, if it does shut down voluntarily, everything
+On the other hand, if it has finished voluntarily, everything
 remains silent:
 
   local exec = require "tek.lib.exec"
@@ -364,14 +365,12 @@ remains silent:
   exec.sleep(100)
   =>
   
-I have added the last line to drive home that message, because your
-friggin' operating system could theoretically decide to postpone
-execution of the child task just long enough that we ended up with
-an error and a stracktrace nonetheless. (Told in confidence, this is
-not true, ''this'' example wouldn't raise a signal even without
-sleeping in the parent, but this is an implementation detail of
-LuaExec that shouldn't make it into a tutorial. We may get back to
-this later.)
+I have added the last line to drive home that point, because your
+funny operating system could theoretically decide to postpone
+execution of the child task just long enough, so that we ended up
+with an error and a stracktrace nonetheless. (Told in confidence,
+this is not true, ''this'' example wouldn't raise a signal even without
+sleeping in the parent, but this is an implementation detail.)
 
 Note that although this is the plushy world of Lua, and LuaExec tries
 its best to hide the nastiness of multithreaded programming from you,
@@ -393,7 +392,7 @@ Especially in the Lua world this seems to be hotly debated -
 
 In computations, actually, it is difficult to put them to good use,
 but matters improved a bit in that regard, with projects like
-SETI@home, mining bitcoins, and so on. There are enough CPU cycles
+SETI@home, mining bitcoins, and so on. There are plenty of CPU cycles
 to be wasted in fun computations, especially if you run them in a
 scripting language. Wouldn't it be a pity if we couldn't saturate
 eight cores from a one-liner in Lua?
@@ -404,19 +403,19 @@ useful if they are bound to I/O operations that are precisely ''not''
 demanding computationally, but stuttering, jerky, and unpredictable,
 and spend most of their time waiting, but it is impossible to tell
 for how long, and if the wait will even turn out a result. Also note
-that from a computer's viewpoint a human can be seen as a very
+that from a computer's viewpoint a human could be seen as a very
 demanding I/O device, making it a good candidate for a thread or two
 to deal with, although that may not be the most popular take on that
 matter.
 
 So in I/O, that's where computing leaves academia and hits the hard
-cobbles of reality: 
+cobbles of reality:
 Imagine you were writing a virus scanner with a graphical user
 interface (you wouldn't want to write such a software, for all the
 money in the world, I know! This is just an example) - would you
-start a task each time the "scan" button is clicked? No, you would
+start a task each time the scan button is clicked? No, you would
 start that task when the application starts, put it to sleep, and in
-it wait for orders, that is what you'd do.
+it wait for the order to scan, that is what you'd do.
 Or rather, that's what I'd do, and I may be completely off the track,
 because I would allow the user to enter the configuration panels and
 other sections of the program even while such a scan is in progress.
@@ -438,34 +437,32 @@ First let's see how we can start and stop such an application worker:
   true    worker done
 
 There is a new function to end the child task, terminate, and
-there is another new function, wait, that by sheer chance waits
-until the main program calls terminate on the child. What wait
-really does, however, is that it waits until it receives any one or
-more signals from a set of possible signals, and returns the ones
-received to the caller. The signal '''t''' is included in the default
-set, and important enough to be supported by a function on the other
-end, terminate, that really does nothing but to send the
-signal '''t''', and then to behave exactly like join. So this
-would be equivalent to the last line in the example above:
+another new function, wait, that by sheer chance waits until the main
+program calls terminate on the child. What wait really does, however,
+is that it waits until it receives any one or more signals from a set
+of possible signals, and returns the ones received to the caller. The
+signal '''t''' is included in the default set, and it is important
+enough to be supported by a function on the other end, terminate, that
+really does nothing but to send the '''t''' signal, and then to behave
+exactly like join. So this would be equivalent to the last line:
 
   c:signal("t")
   print(c:join())
 
 There are more signals, but the t signal is the most gentle one, with
 the predefined meaning "pretty please, could you quit?". There is
-about nothing that would happen if you received a t signal and did
-not react on it, and there is nothing that keeps you from assigning
-it a different meaning.
+nothing wrong if you received this signal and did nothing in reaction,
+and nothing keeps you from assigning it a different meaning.
 
-By now it has probably dawned upon the Unix connaisseurs that
+By now it has probably dawned upon Unix connoisseurs that
 LuaExec signals have got '''nil''' to do with Unix signals, although
 there are some artifical similarities in their names. The meanings
 reserved to them are completely different.
 
-Rowdies and bullies among you (who have the exceptional attention
+Rowdies and bullies among you (who have an exceptional attention
 span to be still following this tutorial) surely want to see the
 brutal termination of a task. We can't help but to admit that this
-has to be mentioned, so pay attention, we will do this only once,
+needs to be mentioned, so pay attention, we will do this only once,
 because we wouldn't want to further support your urge to destroy
 things:
 
@@ -483,31 +480,30 @@ things:
           bin/tutorial.lua:4: in function <bin/tutorial.lua:2>
           [C]: in ?
 
-It really doesn't matter what the child task is doing, as long as
-it is in Lua code or a LuaExec function, it will be interrupted.
-Once again the {{abort}} method is just the short form for sending a
-signal, in this case '''a''' for abort, and then to {{join}}. But
-why would you want to call abort at all? In exchange you are getting
-an ugly stack trace that you somehow need to hide from your audience
-whom you wanted to convince of using your program, and this is even
-done automatically for you when your program ends and if there are
-still tasks running. We leave it at that it is a rather exceptional
-thing to do.
+It doesn't matter what the child task is doing, as long as it is in
+Lua code or a LuaExec function, it will be interrupted. Here again
+the {{abort}} method is just the short form for sending a signal, in
+this case '''a''' for abort, and then to {{join}}. But why would you
+want to call abort at all? In exchange you are getting an ugly stack
+trace that you somehow need to hide from your audience whom you
+wanted to convince of using your program, and this is even done
+automatically for you when your program ends and if there are still
+tasks running. We leave it at that it is a rather exceptional thing
+to do.
 
-Signals are important, even essential, but their number is
-extremely limited, only four in fact, of which we know two already,
-and of which there is only one free for the user, '''t'''. There
-could be more signals, user signals 1, 2, 3, {{SIGGUMBO}}, you name
-them. But we asked ourselves, why even stop there? No, we have kept
-the number of signals at the bare minimum so that you won't have to
-ponder needlessly on freaked out meanings that could be assigned to
-them.
+Signals are important, even essential, but their number is limited,
+only four in fact, of which we know two already, and of which there
+is only one free for the user, '''t'''. There could be more signals,
+user signals 1, 2, 3, {{SIGFOO}}, you name them. But we asked
+ourselves, why even stop there? No, we have kept the number of
+signals at the bare minimum so that you won't have to ponder
+needlessly on freaked out meanings that could be assigned to them.
 
 Because, there is a tool that is so much more powerful, based on,
 but transcending signals.
 This tool is called messages. Messages can be any data, you can
 reserve all meaning in the world to them, and with them, you can
-even do without signals completely:
+even do without signals:
 
   local exec = require "tek.lib.exec"
   local c = exec.run(function()
@@ -538,7 +534,7 @@ sent you a message, in this example the main program, {{"main"}}.
 By receiving the sender together with the message you can write a
 worker that is completely ignorant of the rest of the world, it just
 takes the next order, executes it, and sends the result back to the
-originator. Our first real worker will compute 10 random numbers
+originator. Our first real worker will compute 5 random numbers
 between 1 and 10:
 
   local exec = require "tek.lib.exec"
@@ -553,7 +549,7 @@ between 1 and 10:
       end
     end
   end)
-  for i = 1, 10 do
+  for i = 1, 5 do
     c:sendmsg("getrandom")
     print(exec.waitmsg())
   end
@@ -565,35 +561,29 @@ between 1 and 10:
   7       task: 0x7f4e60000af0    m
   7       task: 0x7f4e60000af0    m
   9       task: 0x7f4e60000af0    m
-  1       task: 0x7f4e60000af0    m
-  3       task: 0x7f4e60000af0    m
-  7       task: 0x7f4e60000af0    m
-  2       task: 0x7f4e60000af0    m
-  5       task: 0x7f4e60000af0    m
 
 Some commentary is probably advised. The first column in the output
-contains the returned random number, the second the name of the
-sender, as we already know from the previous example.
-Because here, the sender is the child task and the child task has no
-name, LuaExec has given it some identification.
+is the returned message body, the second the name of the sender, as
+we already know from the previous example. Because here the sender
+is the child task and the child task has no name, LuaExec has given
+it a name for identification.
 
-The third return value from waitmsg (that we haven't seen yet) is the
-signal (if any) that caused waitmsg to return, and by this we also
-get to know the third signal, '''m''' for message, which indicates
-that, you guessed it, the task has received a message. Please note,
-however, that it is entirely possible that there is no signal that
-causes waitmsg to return (in which case the third return value will
-be '''nil'''), because returning the signal to the caller also
-clears it from the task, and there may have been more messages
-arrived in the meantime, in which case waitmsg will return
-immediately.
+The third return value from waitmsg is the signal that caused waitmsg
+to return, and by this we also get to know the third signal, '''m'''
+for message, which indicates that, you guessed it, the task has
+received a message. Please note, however, that it is entirely
+possible that there is no signal that causes waitmsg to return (in
+which case the third return value will be '''nil'''), because
+returning the signal to the caller also clears it from the task, and
+there may be more messages arriving in the meantime, in which case
+waitmsg will return the next message immediately.
 
 To conclude this introductory tutorial, didn't we say eight cores?
 
 Well, of course none of these exercises in futility have got anything
-to do with eight cores, but here's the same worker again (this time
-we have given it a name), and eight other tasks requesting random
-numbers from it:
+to do with cores, but here's the same worker again (this time we have
+given it a name), and ten other tasks requesting random numbers from
+it:
 
   local exec = require "tek.lib.exec"
   local c = exec.run({ taskname = "worker", func = function()
@@ -625,13 +615,13 @@ numbers from it:
   510     worker          workerm
   m
   8       worker  m
-  [...]
+  ...
 
 You may find the output a bit scrambed sometimes, like I do on my
 computer. This is harmless and due to the fact that multiple tasks
 are writing to standard output at the same time. The exact behaviour
 may vary between different operating systems, but even if you don't
-get a scrambled output on your computer, you may get the point.
+get a scrambled output on your computer, you may still get the point.
 
 Of course we can still do worse than that. To expose this tutorial
 to ridicule once and for all, in the final example the results will
@@ -670,5 +660,5 @@ Besides prettier output, here we have another feature of LuaExec,
 addressing a task by the name {{"*p"}}, which sends a message to a
 task's parent task.
 
---------------------------------------------------------------------
 
+--------------------------------------------------------------------
