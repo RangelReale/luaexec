@@ -155,8 +155,8 @@
 						LuaExec is a regular module using only the legal Lua API.
 					</li>
 					<li>
-						It should work with Lua 5.1, 5.2, 5.3, and LuaJIT2.0 on POSIX and
-						Windows. Not all combinations are fully tested yet.
+						It should work with Lua 5.1, 5.2, 5.3 on POSIX and Windows.
+						Not all combinations are fully tested yet.
 					</li>
 					<li>
 						Child tasks are subject to garbage collection in their parent
@@ -282,7 +282,7 @@
 			<blockquote>
 				<ul>
 					<li>
-						Lua 5.1, 5.2, 5.3, LuaJIT 2.x
+						Lua 5.1, 5.2, 5.3
 					</li>
 					<li>
 						GCC or LLVM/clang
@@ -295,6 +295,9 @@
 			<p>
 				Only for the HTTP example and documentation generator:
 				Lua 5.2 and 5.3 must be compiled with <code>LUA_COMPAT_MODULE</code>.
+			</p>
+			<p>
+				LuaJIT does not work.
 			</p>
 			<h4>
 				External Lua modules

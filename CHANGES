@@ -1,6 +1,10 @@
 
 == LuaExec Changelog ==
 
+ * The intent of supporting LuaJIT has been dismissed, because LuaJIT
+ does not fully implement the Lua API. This would have been a
+ requirement to circumvent its divergent behaviour. 
+
 === 0.82: ===
 
  * LuaExec: in join() abort signals could be forwarded to already dead
