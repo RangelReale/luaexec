@@ -11,6 +11,26 @@
 			LuaExec Changelog
 		</h2>
 		<h3>
+			0.82:
+		</h3>
+		<blockquote>
+			<ul>
+				<li>
+					LuaExec: in <a href="manual.html#join"><code>join()</code></a> abort signals could be forwarded to already dead
+					task, corrected by freeing task after return from exec, in <a href="manual.html#waitmsg"><code>waitmsg()</code></a> 
+					fixed recalculation of waittime, returned signals should be correct now
+				</li>
+				<li>
+					Examples from tutorial and some stress tests added
+				</li>
+				<li>
+					Exec: added semi-internal function <a href="manual.html#TFreeTask"><code>TFreeTask()</code></a>, user tasks are now
+					freed in destructor context after their return from exec, minor cleanup
+					in memory functions
+				</li>
+			</ul>
+		</blockquote>
+		<h3>
 			0.81:
 		</h3>
 		<blockquote>
