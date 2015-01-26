@@ -30,7 +30,7 @@
 -------------------------------------------------------------------------------
 
 module "tek.lib.exec"
-_VERSION = "Exec 1.0"
+_VERSION = "Exec 0.83"
 local Exec = _M
 
 -----------------------------------------------------------------------------*/
@@ -47,24 +47,61 @@ local Exec = _M
 #include "lualib.h"
 
 
-#define TEK_LIB_EXEC_PROGNAME "luatask"
+#if defined(ENABLE_LAZY_SINGLETON)
+#define ENABLE_TASKS
+#endif
+
 #define TEK_LIB_EXEC_CLASSNAME "tek.lib.exec*"
+
+#if defined(ENABLE_TASKS)
+#define TEK_LIB_EXEC_PROGNAME "luatask"
 #define TEK_LIB_TASK_CLASSNAME "tek.lib.exec.task*"
 #define TEK_LIB_EXECBASE_REGNAME "TExecBase*"
 #define TEK_LIB_BASETASK_ATOMNAME "task.main"
 #define TEK_LIB_TASKNAME_LEN 64
 #define TEK_LIB_TASK_ATOMNAME "task.%s"
 #define TEK_LIB_TASK_ATOMNAME_OFFSET	5
+#endif
 
 
 struct LuaExecTask
 {
 	struct TExecBase *exec;
 	struct TTask *task;
+#if defined(ENABLE_TASKS)
 	struct LuaExecTask *parent;
 	char *taskname;
 	char atomname[TEK_LIB_TASKNAME_LEN];
+#endif
 };
+
+
+static const struct TInitModule tek_lib_exec_initmodules[] =
+{
+	{"hal", tek_init_hal, TNULL, 0},
+	{"exec", tek_init_exec, TNULL, 0},
+	{ TNULL, TNULL, TNULL, 0 }
+};
+
+
+static int tek_lib_exec_base_gc(lua_State *L)
+{
+	struct LuaExecTask *lexec = luaL_checkudata(L, 1, TEK_LIB_EXEC_CLASSNAME);
+	if (lexec->exec)
+	{
+#if defined(ENABLE_TASKS)
+		TAPTR atom = TExecLockAtom(lexec->exec, TEK_LIB_BASETASK_ATOMNAME, 
+			TATOMF_NAME);
+		TExecUnlockAtom(lexec->exec, atom, TATOMF_DESTROY);
+#endif
+		TDestroy((struct THandle *) lexec->task);
+		lexec->exec = TNULL;
+	}
+	return 0;
+}
+
+
+#if defined(ENABLE_TASKS)
 
 
 struct LuaTaskArgs
@@ -87,29 +124,6 @@ struct LuaExecChild
 	struct LuaTaskArgs *args, *results;
 	TBOOL abort;
 };
-
-
-static const struct TInitModule tek_lib_exec_initmodules[] =
-{
-	{"hal", tek_init_hal, TNULL, 0},
-	{"exec", tek_init_exec, TNULL, 0},
-	{ TNULL, TNULL, TNULL, 0 }
-};
-
-
-static int tek_lib_exec_base_gc(lua_State *L)
-{
-	struct LuaExecTask *lexec = luaL_checkudata(L, 1, TEK_LIB_EXEC_CLASSNAME);
-	if (lexec->exec)
-	{
-		TAPTR atom = TExecLockAtom(lexec->exec, TEK_LIB_BASETASK_ATOMNAME, 
-			TATOMF_NAME);
-		TExecUnlockAtom(lexec->exec, atom, TATOMF_DESTROY);
-		TDestroy((struct THandle *) lexec->task);
-		lexec->exec = TNULL;
-	}
-	return 0;
-}
 
 
 static TUINT tek_lib_exec_string2sig(const char *ss)
@@ -652,6 +666,16 @@ static const char *tek_lib_exec_dump(lua_State *L, size_t *len)
 }
 
 
+static void *tek_lib_exec_allocf(void *ud, void *ptr, size_t osize,
+	size_t nsize)
+{
+	if (nsize != 0)
+		return realloc(ptr, nsize);
+	free(ptr);
+	return NULL;
+}
+
+
 /*-----------------------------------------------------------------------------
 --	child = Exec.run(what[, arg1[, ...]]): Tries to launch a Lua script,
 --	function, or chunk, and returns a handle on a child task if successful.
@@ -780,9 +804,12 @@ static int tek_lib_exec_run(lua_State *L)
 	ctx->args = tek_lib_exec_getargs(L, TExecBase, 2, ctx->numargs++, 1);
 	lua_pop(L, 1);
 	
-	ctx->L = luaL_newstate();
+	ctx->L = lua_newstate(tek_lib_exec_allocf, TExecBase);
 	if (ctx->L == TNULL)
-		luaL_error(L, "out of memory");
+	{
+		tek_lib_exec_freeargs(TExecBase, ctx->args, ctx->numargs);
+		luaL_error(L, "cannot create interpreter");
+	}
 	
 	tags[0].tti_Tag = TTask_UserData;
 	tags[0].tti_Value = (TTAG) ctx;
@@ -1120,6 +1147,38 @@ static int tek_lib_exec_child_sendmsg(lua_State *L)
 }
 
 
+static void tek_lib_exec_init_link_to_parent(lua_State *L, 
+	struct LuaExecTask *lexec)
+{
+	struct TExecBase *TExecBase = lexec->exec;
+	TAPTR atom;
+	
+	/* task's userdata initially contains a pointer to
+	** childtask-userdata in parent Lua state */
+	struct LuaExecChild *ctx = TGetTaskData(TNULL);
+	
+	/* now relink to own task */
+	TSetTaskData(TNULL, lexec);
+	
+	lexec->parent = ctx ? ctx->parent : TNULL;
+	if (ctx && ctx->taskname)
+	{
+		strcpy(lexec->atomname, ctx->atomname);
+		lexec->taskname = lexec->atomname + TEK_LIB_TASK_ATOMNAME_OFFSET;
+	}
+	else
+		lexec->taskname = tek_lib_exec_taskname(lexec->atomname, "main");
+
+	atom = TLockAtom(TEK_LIB_BASETASK_ATOMNAME, 
+		TATOMF_CREATE | TATOMF_NAME | TATOMF_TRY);
+	if (atom)
+	{
+		TSetAtomData(atom, (TTAG) lexec->task);
+		TUnlockAtom(atom, TATOMF_KEEP);
+	}
+}
+
+
 static const luaL_Reg tek_lib_exec_child_methods[] =
 {
 	{ "__gc", tek_lib_exec_child_gc },
@@ -1133,8 +1192,12 @@ static const luaL_Reg tek_lib_exec_child_methods[] =
 };
 
 
+#endif
+
+
 static const luaL_Reg tek_lib_exec_funcs[] =
 {
+#if defined(ENABLE_TASKS)
 	{ "getmsg", tek_lib_exec_getmsg },
 	{ "getname", tek_lib_exec_getname },
 	{ "getsignals", tek_lib_exec_getsignals },
@@ -1146,6 +1209,7 @@ static const luaL_Reg tek_lib_exec_funcs[] =
 	{ "wait", tek_lib_exec_wait },
 	{ "waitmsg", tek_lib_exec_waitmsg },
 	{ "waittime", tek_lib_exec_waittime },
+#endif
 	{ TNULL, TNULL }
 };
 
@@ -1161,13 +1225,13 @@ TMODENTRY int luaopen_tek_lib_exec(lua_State *L)
 {
 	struct TExecBase *TExecBase;
 	struct LuaExecTask *lexec;
-	struct LuaExecChild *ctx;
 	TTAGITEM tags[2];
 	
 	luaL_newmetatable(L, TEK_LIB_EXEC_CLASSNAME);
 	tek_lua_register(L, NULL, tek_lib_exec_methods, 0);
 	/* execmeta */
 
+#if defined(ENABLE_TASKS)
 	luaL_newmetatable(L, TEK_LIB_TASK_CLASSNAME);
 	/* execmeta, taskmeta */
 	lua_pushvalue(L, -2);
@@ -1178,6 +1242,7 @@ TMODENTRY int luaopen_tek_lib_exec(lua_State *L)
 	lua_setfield(L, -2, "__index");
 	lua_pop(L, 1);
 	/* execmeta */
+#endif
 	
 	lexec = lua_newuserdata(L, sizeof(struct LuaExecTask));
 	/* execmeta, luaexec */
@@ -1212,28 +1277,9 @@ TMODENTRY int luaopen_tek_lib_exec(lua_State *L)
 		luaL_error(L, "Failed to initialize TEKlib");
 	lexec->exec = TExecBase = TGetExecBase(lexec->task);
 
-	/* task's userdata initially contains a pointer to childtask-userdata
-	** in parent Lua state */
-	ctx = TGetTaskData(TNULL);
-	/* now relink to own task */
-	TSetTaskData(TNULL, lexec);
-	
-	lexec->parent = ctx ? ctx->parent : TNULL;
-	if (ctx && ctx->taskname)
-	{
-		strcpy(lexec->atomname, ctx->atomname);
-		lexec->taskname = lexec->atomname + TEK_LIB_TASK_ATOMNAME_OFFSET;
-	}
-	else
-		lexec->taskname = tek_lib_exec_taskname(lexec->atomname, "main");
+#if defined(ENABLE_TASKS)
+	tek_lib_exec_init_link_to_parent(L, lexec);
+#endif
 
-	TAPTR atom = TLockAtom(TEK_LIB_BASETASK_ATOMNAME, 
-		TATOMF_CREATE | TATOMF_NAME | TATOMF_TRY);
-	if (atom)
-	{
-		TSetAtomData(atom, (TTAG) lexec->task);
-		TUnlockAtom(atom, TATOMF_KEEP);
-	}
-	
 	return 1;
 }

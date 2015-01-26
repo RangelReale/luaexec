@@ -13,6 +13,11 @@
 		<blockquote>
 			<ul>
 				<li>
+					Interpreter is now created using lua_newstate so that it may bail
+					out on LuaJIT with a meaningful message; updated documentation to reflect
+					that not all hope may be lost on LuaJIT
+				</li>
+				<li>
 					The intent of supporting LuaJIT has been dismissed, because LuaJIT
 					does not fully implement the Lua API. This would have been a
 					requirement to circumvent its divergent behaviour.

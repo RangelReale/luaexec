@@ -143,7 +143,10 @@ Online source code repository:
 Only for the HTTP example and documentation generator:
 Lua 5.2 and 5.3 must be compiled with {{LUA_COMPAT_MODULE}}.
 
-LuaJIT does not work.
+LuaExec is supposed to work with LuaJIT 2.0, provided that LuaJIT
+implements or can be made to implement {{lua_newstate()}} without
+reporting an error. On x86_64 however this has been found to not be
+the case. 
 
 ==== External Lua modules ====
 
@@ -220,7 +223,7 @@ the document generator to process the file system hierarchy.
 
 ===( tests : 3.1 Tests )===
 
-Tests are under {{bin/task/}}.
+Examples from the tutorial, HTTP server, and tests are in {{bin/}}.
 
 ===( httpserver : 3.2 HTTP Server example )===
 

@@ -297,7 +297,10 @@
 				Lua 5.2 and 5.3 must be compiled with <code>LUA_COMPAT_MODULE</code>.
 			</p>
 			<p>
-				LuaJIT does not work.
+				LuaExec is supposed to work with LuaJIT 2.0, provided that LuaJIT
+				implements or can be made to implement <code>lua_newstate()</code> without
+				reporting an error. On x86_64 however this has been found to not be
+				the case.
 			</p>
 			<h4>
 				External Lua modules
@@ -403,7 +406,7 @@
 		</div>
 		<div class="node"><h3><a name="tests" id="tests">3.1 Tests</a></h3>
 			<p>
-				Tests are under <code>bin/task/</code>.
+				Examples from the tutorial, HTTP server, and tests are in <code>bin/</code>.
 			</p>
 		</div>
 		<div class="node"><h3><a name="httpserver" id="httpserver">3.2 HTTP Server example</a></h3>

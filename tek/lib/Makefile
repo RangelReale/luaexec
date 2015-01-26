@@ -2,7 +2,7 @@
 BASEDIR ?= ../..
 include $(BASEDIR)/config
 
-EXTRADEFS += $(LUA_DEFS)
+EXTRADEFS += $(LUA_DEFS) $(TEKLIB_DEFS)
 
 ###############################################################################
 
