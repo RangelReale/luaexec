@@ -4,7 +4,9 @@
 --	(C) by Timm S. Mueller <tmueller@schulze-mueller.de>
 --
 --	OVERVIEW::
---		LuaWTF - Lua Web Tiny Framework
+--		[[#ClassOverview]] :
+--		[[#tek.class : Class]] /
+--		WTF ${subclasses(WTF)} - Lua Web Tiny Framework
 --
 --	MEMBERS::
 --		- {{Buffered [ISG]}} (boolean)
@@ -41,10 +43,8 @@ local stderr = io.stderr
 local traceback = debug.traceback
 local type = type
 
-module("tek.class.wtf", tek.class)
-_VERSION = "WTF 2.1"
-local WTF = _M
-Class:newClass(WTF)
+local WTF = Class. module("tek.class.wtf", "tek.class")
+WTF._VERSION = "WTF 2.2"
 
 -------------------------------------------------------------------------------
 --	encodeurl: encode string to url; optionally specify a string with a
@@ -253,3 +253,5 @@ function WTF:doRequest(req)
 ]])
 	end
 end
+
+return WTF

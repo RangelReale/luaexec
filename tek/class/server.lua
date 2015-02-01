@@ -48,10 +48,8 @@ local type = type
 local unpack = unpack or table.unpack
 local xpcall = have_coxpcall and coxpcall.xpcall or xpcall
 
-module("tek.class.server", tek.class)
-_VERSION = "Server 2.2"
-local Server = _M
-Class:newClass(Server)
+local Server = Class. module("tek.class.server", "tek.class")
+Server._VERSION = "Server 2.3"
 
 if have_copas then
 	copas.autoclose = false
@@ -385,3 +383,5 @@ function Server:unregister(name)
 	end
 	error("could not find fd")
 end
+
+return Server

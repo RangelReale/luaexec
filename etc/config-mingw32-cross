@@ -1,4 +1,3 @@
-
 #------------------------------------------------------------------------------
 # Platform to build against [Choices: posix, winnt]:
 #------------------------------------------------------------------------------
@@ -11,26 +10,32 @@ PLATFORM ?= winnt
 
 DLLEXT = .dll
 
-
 #------------------------------------------------------------------------------
 # Compiler configuration:
-# Comment in TSYS_POSIX if your platform is not listed in include/tek/config.h
 #------------------------------------------------------------------------------
 
-# CROSS_COMPILE =
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# For UNIX-like platforms:
+# Uncomment TSYS_POSIX if your platform is not listed in include/tek/config.h
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 # CC = $(CROSS_COMPILE)gcc -fpic # -DTSYS_POSIX
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # For Windows using MinGW:
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-CC = $(CROSS_COMPILE)gcc -DWIN32
+CC = $(CROSS_COMPILE)gcc -DWIN32 -DWINVER=0x0400 -D_WIN32_WINNT=0x0400
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Cross-build using MinGW:
+# Cross-build prefix:
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# CROSS_COMPILE =
+# Classic MinGW32:
 CROSS_COMPILE = i586-mingw32-
+# MinGW-W64 targeting 32-Bit Windows:
+# CROSS_COMPILE = i686-w64-mingw32-
 
 #------------------------------------------------------------------------------
 # Platform libraries:
@@ -76,11 +81,13 @@ CROSS_COMPILE = i586-mingw32-
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Windows:
-# (Assuming that lua51.dll is in the top-level directory of the distribution)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 PLATFORM_LIBS = -lmsvcrt -lkernel32 -lwinmm -luser32 -lshell32 -ladvapi32
 LUA_LIBS = -L $(BASEDIR) -llua51
+
+# PLATFORM_LIBS = -lwinmm
+# LUA_LIBS = -llua5.2
 
 #------------------------------------------------------------------------------
 # TEKlib features:
@@ -91,15 +98,22 @@ LUA_LIBS = -L $(BASEDIR) -llua51
 TEKLIB_DEFS = -DENABLE_LAZY_SINGLETON
 
 #------------------------------------------------------------------------------
-# Installation and system paths:
-# (Installation is not always required, e.g. x11 and windows can do without)
+# Lua version, prefix, include and installation paths:
+# Installation is not always required, e.g. x11 and windows can do without.
+# When adjusting the Lua version, see also below for include paths
 #------------------------------------------------------------------------------
 
 PREFIX ?= /usr/local
 LUAVER ?= 5.1
+
+LUA_DIR = $(PREFIX)
+LUA_INCDIR = $(LUA_DIR)/include
+LUA_DEFS = -I$(LUA_INCDIR) -I/usr/include/lua$(LUAVER)
+# some known paths in distributions and toolchains:
+# LUA_DEFS += -I/usr/local/include/lua51 -I/usr/include/lua5.1
+
 LUA_LIB = $(PREFIX)/lib/lua/$(LUAVER)
 LUA_SHARE = $(PREFIX)/share/lua/$(LUAVER)
-LUA_INCLUDE = $(PREFIX)/include
 SYS_LUA_LIB = $(PREFIX)/lib/lua/$(LUAVER)
 SYS_LUA_SHARE = $(PREFIX)/share/lua/$(LUAVER)
 
@@ -121,7 +135,7 @@ MODDIR = $(BINDIR)/mod
 DEBUG = -DTDEBUG=5 -g # TDEBUG: the lower, the more verbose. 5 = WARN
 WARN = -Wall -Wextra -Wno-unused-parameter -Wno-unused-function -Wno-long-long
 OPT = -O2 -fno-strict-aliasing
-INCL = -I. -Iinclude -I$(INCDIR) -I$(LUA_INCLUDE)
+INCL = -I. -Iinclude -I$(INCDIR)
 LIBCFLAGS = $(DEBUG) $(WARN) $(OPT) $(INCL) $(EXTRADEFS) $(CPPFLAGS) $(CFLAGS)
 MODCFLAGS = -shared -L $(LIBDIR) $(LDFLAGS)
 # For Mac OS X:
@@ -135,8 +149,8 @@ LUAARCH = -m64 # -m32 for 32bit, -m64 for 64bit architecture
 #------------------------------------------------------------------------------
 
 AR = $(CROSS_COMPILE)ar rcu
-RM = rm
-RMDIR = rm -r
+RM = rm -f
+RMDIR = rm -rf
 MKDIR = mkdir -p
 ECHO = echo
 INSTALL_B = install

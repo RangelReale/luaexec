@@ -11,7 +11,7 @@
 			LuaExec
 		</h1>
 		<p>
-			Version 0.82
+			Version 0.83
 		</p>
 		<hr />
 		<h3>
@@ -229,18 +229,20 @@
 				LuaExec is free software under the same license as Lua itself: It can
 				be used for both academic and commercial purposes at no cost. It
 				qualifies as Open Source software, and its license is compatible with
-				the GPL &#8211; see <a href="copyright.html">copyright</a>. Additional components
-				are available under a commercial license &#8211; see below.
+				the GPL &#8211; see <a href="copyright.html">copyright</a>.
 			</p>
 		</div>
 		<div class="node"><h3><a name="links" id="links">1.6. Authors, links and downloads</a></h3>
 			<p>
-				Authors:
+				Authors, contributors:
 			</p>
 			<blockquote>
 				<ul>
 					<li style="list-style-type: none">
 						Timm S. M&#252;ller &lt;tmueller at schulze-mueller.de&gt;
+					</li>
+					<li style="list-style-type: none">
+						Tobias Schwinger &lt;tschwinger at isonews2.com&gt;
 					</li>
 				</ul>
 			</blockquote>
@@ -293,10 +295,6 @@
 				</ul>
 			</blockquote>
 			<p>
-				Only for the HTTP example and documentation generator:
-				Lua 5.2 and 5.3 must be compiled with <code>LUA_COMPAT_MODULE</code>.
-			</p>
-			<p>
 				LuaExec is supposed to work with LuaJIT 2.0, provided that LuaJIT
 				implements or can be made to implement <code>lua_newstate()</code> without
 				reporting an error. On x86_64 however this has been found to not be
@@ -330,6 +328,14 @@
 				Linux) and <code>pmake</code> (common under FreeBSD). More build options and
 				peculiarities are documented in the tekUI package, many of which
 				apply to the LuaExec package as well.
+			</p>
+			<h4>
+				Windows notes
+			</h4>
+			<p>
+				We recommend using the MSYS shell and MinGW under Windows, or to
+				cross-build for Windows using GCC or clang. An example configuration
+				is provided in <code>etc/</code>.
 			</p>
 			<h4>
 				BSD notes
@@ -409,7 +415,7 @@
 				Examples from the tutorial, HTTP server, and tests are in <code>bin/</code>.
 			</p>
 		</div>
-		<div class="node"><h3><a name="httpserver" id="httpserver">3.2 HTTP Server example</a></h3>
+		<div class="node"><h3><a name="httpserver" id="httpserver">3.2 HTTP server example</a></h3>
 			<p>
 				One of the use cases LuaExec was developed against was to supply
 				a regular Lua application with an inbuilt HTTP server. It can be

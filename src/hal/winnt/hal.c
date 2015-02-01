@@ -3,7 +3,8 @@
 **	$Id: hal.c,v 1.1 2006/08/25 21:23:42 tmueller Exp $
 **	teklib/mods/hal/win32/hal.c - Windows implementation of the HAL layer
 **
-**	Written by Timm S. Mueller <tmueller at neoscientists.org>
+**	Written by Timm S. Mueller <tmueller@schulze-mueller.de>
+**	contributions by Tobias Schwinger <tschwinger@isonews2.com>
 **	See copyright notice in teklib/COPYRIGHT
 */
 
@@ -23,6 +24,20 @@
 #if defined(ENABLE_LAZY_SINGLETON)
 #warning using globals and MMTimer (-DENABLE_LAZY_SINGLETON)
 #define USE_MMTIMER
+#endif
+
+/* 
+** Some versions of MinGW appear to have an incomplete Interlocked API
+** so just use GCC-style intrinsics directly which are also supported
+** by Clang.
+**
+** Note that __MINGW32__ is defined for both 32 and 64 Bit Windows.
+** We do not change existing macros in case the runtime uses them to
+** implement the MS API.
+*/
+#if defined HAL_USE_ATOMICS && defined __MINGW32__ && !defined InterlockedAnd
+#define InterlockedAnd __sync_fetch_and_and
+#define InterlockedOr __sync_fetch_and_or
 #endif
 
 static void hal_getsystime(struct THALBase *hal, TTIME *time);
@@ -310,20 +325,17 @@ hal_setsignal(struct THALBase *hal, TUINT newsig, TUINT sigmask)
 #ifndef HAL_USE_ATOMICS 
 	TUINT oldsig;
 	EnterCriticalSection(&wth->hth_SigLock);
-	newsig &= sigmask;
 	oldsig = wth->hth_SigState;
 	wth->hth_SigState &= ~sigmask;
 	wth->hth_SigState |= newsig;
-	if (newsig & ~oldsig)
-		SetEvent(wth->hth_SigEvent);
 	LeaveCriticalSection(&wth->hth_SigLock);
 	return oldsig;
 #else
 	TUINT cmask = ~sigmask | newsig;
 	TUINT before_consume = InterlockedAnd(&wth->hth_SigState, cmask);
+	if (! newsig)
+		return before_consume;
 	TUINT before_publish = InterlockedOr(&wth->hth_SigState, newsig);
-	if (newsig & ~before_publish  & sigmask)
-		SetEvent(wth->hth_SigEvent);
 	return (before_consume & ~cmask) | (before_publish & cmask);
 #endif
 }

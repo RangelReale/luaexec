@@ -16,10 +16,8 @@ local select = select
 local type = type
 local unpack = unpack or table.unpack
 
-module("tek.class.fifo", tek.class)
-_VERSION = "FIFO 2.1"
-local FIFO = _M
-Class:newClass(FIFO)
+local FIFO = Class.module("tek.class.fifo", "tek.class")
+FIFO._VERSION = "FIFO 2.2"
 
 function FIFO.new(class, self)
 	self = self or { }
@@ -163,3 +161,5 @@ FIFO.send = FIFO.write
 function FIFO:close()
 	-- no op
 end
+
+return FIFO

@@ -3,6 +3,11 @@
 --	tek.class.cgi
 --	(C) by Timm S. Mueller <tmueller@schulze-mueller.de>
 --
+--	OVERVIEW::
+--		[[#ClassOverview]] :
+--		[[#tek.class : Class]] /
+--		CGI ${subclasses(CGI)}
+--
 --	IMPLEMENTS::
 --		- CGI:beginPost()
 --		- CGI:beginUpload()
@@ -11,7 +16,6 @@
 --		- CGI:endRequest()
 --		- CGI:endUpload()
 --		- CGI:haveParams()
---		- CGI:serve()
 --		- CGI:updatePost()
 --		- CGI:updateUpload()
 --
@@ -30,10 +34,8 @@ local stdin = io.stdin
 local tmpfile = io.tmpfile
 local tonumber = tonumber
 
-module("tek.class.cgi", tek.class)
-_VERSION = "CGI 5.1"
-local CGI = _M
-Class:newClass(CGI)
+local CGI = Class.module("tek.class.cgi", "tek.class")
+CGI._VERSION = "CGI 5.2"
 
 -------------------------------------------------------------------------------
 -- CGI class:
@@ -282,3 +284,5 @@ function CGI:updatePost(req, s)
 	self.ParseState = parse
 	return true
 end
+
+return CGI

@@ -1,6 +1,11 @@
 
 == LuaExec Changelog ==
 
+=== 0.83: ===
+
+ * Changes to the class and documentation system, no longer requires
+ Lua 5.2, 5.3 to be compiled with LUA_COMPAT_MODULE
+ * Windows HAL: Now uses atomics instead of locking
  * Interpreter is now created using lua_newstate so that it may bail
  out on LuaJIT with a meaningful message; updated documentation to reflect
  that not all hope may be lost on LuaJIT

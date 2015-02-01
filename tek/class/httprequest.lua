@@ -4,7 +4,9 @@
 --	(C) by Timm S. Mueller <tmueller@schulze-mueller.de>
 --
 --	OVERVIEW::
---		HTTPRequest class
+--		[[#ClassOverview]] :
+--		[[#tek.class : Class]] /
+--		HTTPRequest ${subclasses(HTTPRequest)}
 --
 --	MEMBERS::
 --		- {{Environment [ISG]}} (table)
@@ -39,10 +41,8 @@ local stdout = io.stdout
 local tonumber = tonumber
 local type = type
 
-module("tek.class.httprequest", tek.class)
-_VERSION = "HTTPRequest 2.1"
-local HTTPRequest = _M
-Class:newClass(HTTPRequest)
+local HTTPRequest = Class.module("tek.class.httprequest", "tek.class")
+HTTPRequest._VERSION = "HTTPRequest 2.2"
 
 local DEF_MAX_CONTENT_LENGTH = 1000000
 
@@ -64,7 +64,7 @@ end
 
 function HTTPRequest.decodeArgs(s, args)
 	s:gsub("([^&=]+)=([^&=]+)", function(key, value)
-		value = decodeURL(value)
+		value = HTTPRequest.decodeURL(value)
 		local oldval = args[key]
 		if oldval == nil then
 			args[key] = value
@@ -163,7 +163,7 @@ end
 -------------------------------------------------------------------------------
 
 function HTTPRequest:insertArgString(s)
-	self.Args = decodeArgs(s, { })
+	self.Args = HTTPRequest.decodeArgs(s, { })
 end
 
 -------------------------------------------------------------------------------
@@ -205,3 +205,5 @@ end
 function HTTPRequest:getGlobal()
 	return self.Database.State
 end
+
+return HTTPRequest

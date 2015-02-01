@@ -41,10 +41,8 @@ local unpack = unpack
 --	Module header
 -------------------------------------------------------------------------------
 
-module("tek.class.httpd", tek.class.server)
-local HTTPD = _M
-_VERSION = "httpd 1.0"
-Server:newClass(HTTPD)
+local HTTPD = Server. module("tek.class.httpd", "tek.class.server")
+HTTPD._VERSION = "httpd 1.1"
 
 local function readonly(t)
 	return setmetatable(t, { __newindex = function() error("read-only") end })
@@ -418,3 +416,5 @@ function HTTPD:run()
 	self:unbind()
 	return res
 end
+
+return HTTPD

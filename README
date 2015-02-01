@@ -111,14 +111,14 @@ more tasks examples in the tekUI package.
 LuaExec is free software under the same license as Lua itself: It can
 be used for both academic and commercial purposes at no cost. It
 qualifies as Open Source software, and its license is compatible with
-the GPL – see [[copyright][copyright.html]]. Additional components
-are available under a commercial license – see below.
+the GPL – see [[copyright][copyright.html]].
 
 
 ===( links : 1.6. Authors, links and downloads )===
 
-Authors:
+Authors, contributors:
  - Timm S. Müller <tmueller at schulze-mueller.de>
+ - Tobias Schwinger <tschwinger at isonews2.com>
 
 Open source project website:
  - http://luaexec.neoscientists.org/
@@ -139,9 +139,6 @@ Online source code repository:
  * Lua 5.1, 5.2, 5.3
  * GCC or LLVM/clang
  * MinGW for building for the Windows platform
-
-Only for the HTTP example and documentation generator:
-Lua 5.2 and 5.3 must be compiled with {{LUA_COMPAT_MODULE}}.
 
 LuaExec is supposed to work with LuaJIT 2.0, provided that LuaJIT
 implements or can be made to implement {{lua_newstate()}} without
@@ -166,6 +163,12 @@ directory level. Supported build tools are {{gmake}} (common under
 Linux) and {{pmake}} (common under FreeBSD). More build options and
 peculiarities are documented in the tekUI package, many of which
 apply to the LuaExec package as well.
+
+==== Windows notes ====
+
+We recommend using the MSYS shell and MinGW under Windows, or to
+cross-build for Windows using GCC or clang. An example configuration
+is provided in {{etc/}}.
 
 ==== BSD notes ====
 
@@ -225,7 +228,7 @@ the document generator to process the file system hierarchy.
 
 Examples from the tutorial, HTTP server, and tests are in {{bin/}}.
 
-===( httpserver : 3.2 HTTP Server example )===
+===( httpserver : 3.2 HTTP server example )===
 
 One of the use cases LuaExec was developed against was to supply
 a regular Lua application with an inbuilt HTTP server. It can be

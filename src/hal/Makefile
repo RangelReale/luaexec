@@ -14,14 +14,11 @@ $(OBJDIR)/hal.lo: $(PLATFORM)/hal.c hal_mod.h $(INCDIR)/tek/mod/hal.h
 $(LIBDIR)/libhal.a: $(OBJDIR)/hal_mod.lo $(OBJDIR)/hal.lo
 	$(AR) $@ $?
 
-$(MODDIR)/hal.so: $(OBJDIR)/hal_mod.lo $(OBJDIR)/hal.lo
-	$(CC) $(MODCFLAGS) -o $@ $(OBJDIR)/hal_mod.lo $(OBJDIR)/hal.lo -L$(LIBDIR) -ltekc -ltekdebug $(PLATFORM_LIBS)
-
 ###############################################################################
 
 libs: $(LIBDIR) $(OBJDIR) $(LIBS)
 
-modules: $(OBJDIR) $(MODDIR) $(MODS)
+modules: # $(OBJDIR) $(MODDIR) $(MODS)
 
 clean: FORCE
 	-$(RM) $(MODS) $(TOOLS) $(LIBS)
