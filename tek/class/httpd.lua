@@ -42,7 +42,7 @@ local unpack = unpack
 -------------------------------------------------------------------------------
 
 local HTTPD = Server. module("tek.class.httpd", "tek.class.server")
-HTTPD._VERSION = "httpd 1.1"
+HTTPD._VERSION = "httpd 1.2"
 
 local function readonly(t)
 	return setmetatable(t, { __newindex = function() error("read-only") end })
@@ -81,6 +81,12 @@ function HTTPD.new(class, self)
 	{
 		["%.lua"] = { },
 		["%.lhtml"] = { },
+	}
+	self.DefaultIndex = self.DefaultIndex or
+	{
+		"index.lhtml",
+		"index.lua",
+		"index.html"
 	}
 	self.Listen = self.Listen or false
 	self.Port = self.Port or 8080
@@ -204,6 +210,19 @@ function HTTPD:doFileRequest(fd, req)
 	local ctype = "text/html"
 	local c = { }
 	local fname = self:docToRealPath(req.uri)
+	
+	if req.uri:match(".*/$") then
+		for i = 1, #self.DefaultIndex do
+			local idxname = self.DefaultIndex[i]
+			local fullname = fname .. idxname
+-- 			db.warn("fullname: %s", fullname)
+			if lfs.attributes(fullname, "mode") == "file" then
+				fname = fullname
+				break
+			end
+		end
+	end
+	
 	if lfs.attributes(fname, "mode") == "directory" then
 		local di = self:getDirIterator(req.uri)
 		if di then
