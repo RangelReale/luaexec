@@ -44,7 +44,7 @@ local traceback = debug.traceback
 local type = type
 
 local WTF = Class. module("tek.class.wtf", "tek.class")
-WTF._VERSION = "WTF 2.2"
+WTF._VERSION = "WTF 2.3"
 
 -------------------------------------------------------------------------------
 --	encodeurl: encode string to url; optionally specify a string with a
@@ -252,6 +252,7 @@ function WTF:doRequest(req)
 </html>
 ]])
 	end
+	return res
 end
 
 return WTF

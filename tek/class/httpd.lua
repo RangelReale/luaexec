@@ -42,7 +42,7 @@ local unpack = unpack
 -------------------------------------------------------------------------------
 
 local HTTPD = Server. module("tek.class.httpd", "tek.class.server")
-HTTPD._VERSION = "httpd 1.2"
+HTTPD._VERSION = "httpd 1.3"
 
 local function readonly(t)
 	return setmetatable(t, { __newindex = function() error("read-only") end })
@@ -210,19 +210,6 @@ function HTTPD:doFileRequest(fd, req)
 	local ctype = "text/html"
 	local c = { }
 	local fname = self:docToRealPath(req.uri)
-	
-	if req.uri:match(".*/$") then
-		for i = 1, #self.DefaultIndex do
-			local idxname = self.DefaultIndex[i]
-			local fullname = fname .. idxname
--- 			db.warn("fullname: %s", fullname)
-			if lfs.attributes(fullname, "mode") == "file" then
-				fname = fullname
-				break
-			end
-		end
-	end
-	
 	if lfs.attributes(fname, "mode") == "directory" then
 		local di = self:getDirIterator(req.uri)
 		if di then
@@ -263,6 +250,7 @@ function HTTPD:doFileRequest(fd, req)
 		end
 	end
 	c = concat(c)
+	self:logRequest(fd, req, "200")
 	return self:sendResult(fd, c, ctype)
 end
 
@@ -279,6 +267,7 @@ end
 -------------------------------------------------------------------------------
 
 function HTTPD:doHandler(fd, req, handler, hnd_name)
+	local orgreq = req
 	local httpd = self
 	local webenv = self.WebEnvironment
 	local webdata = self.WebData
@@ -345,12 +334,23 @@ function HTTPD:doHandler(fd, req, handler, hnd_name)
 			local t0 = socket.gettime()
 			db.info("webrequest(%08x) from %s:%s", reqid, addr, port)
 			WTF:new { Environment = webenv }:doRequest(req)
+			httpd:logRequest(fd, orgreq, "200")
 			local t1 = socket.gettime()
 			db.info("webrequest(%08x:%s) complete, took %.3fs",
 				reqid, "<nosession>", t1 - t0)
 		end
 	}:serve()
 	return true
+end
+
+-------------------------------------------------------------------------------
+--	logRequest(req, msg)
+-------------------------------------------------------------------------------
+
+function HTTPD:logRequest(fd, req, msg)
+	local addr, port = fd:getpeername()
+	db.warn("%s %s %s %s %s", req.headers.Host, req.method, req.uri, msg, addr,
+		req.headers.Referrer)
 end
 
 -------------------------------------------------------------------------------
@@ -391,23 +391,46 @@ function HTTPD:serveClient(fd)
 		req.headers[hkey] = hval
 		insert(req.headers, hkey)
 	end
-	
+
 	local handler, hnd_name, scriptpath, scriptname, fname, 
-		pathinfo, querystring
-	for hnd_match, rec in pairs(self.Handlers) do
-		scriptpath, scriptname, pathinfo, querystring = req.uri:match(
-			"^(.-)(/[^/]*" .. hnd_match .. ")%f[%A](/?[^?]*)%??(.*)$")
-		if scriptpath then
-			handler = rec
-			hnd_name = handler.name or hnd_match
-			fname = scriptpath .. scriptname
+		pathinfo, querystring, fmode
+
+	for trynum = 1, 2 do
+		for hnd_match, rec in pairs(self.Handlers) do
+			scriptpath, scriptname, pathinfo, querystring = req.uri:match(
+				"^(.-)(/[^/]*" .. hnd_match .. ")%f[%A](/?[^?]*)%??(.*)$")
+			if scriptpath then
+				handler = rec
+				hnd_name = handler.name or hnd_match
+				fname = scriptpath .. scriptname
+				break
+			end
+		end
+		fname = self:docToRealPath(fname or req.uri)
+		fmode = lfs.attributes(fname, "mode")
+		if handler or fmode == "file" or trynum == 2 then
+			break
+		end
+		local idxfound
+		for i = 1, #self.DefaultIndex do
+			local idxname = self.DefaultIndex[i]
+			local fullname = fname .. "/" .. idxname
+			if lfs.attributes(fullname, "mode") == "file" then
+				if req.uri:match("/$") then
+					req.uri = req.uri .. idxname
+				else
+					req.uri = req.uri .. "/" .. idxname
+				end
+				idxfound = true
+				fname = nil
+				break
+			end
+		end
+		if not idxfound then
 			break
 		end
 	end
-	
-	fname = self:docToRealPath(fname or req.uri)
-	local fmode = lfs.attributes(fname, "mode")
-		
+
 	if handler and fmode == "file" then
 		req.pathinfo = pathinfo
 		req.scriptfilename = fname
@@ -419,6 +442,7 @@ function HTTPD:serveClient(fd)
 		return self:doFileRequest(fd, req)
 	end
 	
+	self:logRequest(fd, req, "404")
 	self:sendResult(fd, "No such file or directory: " .. req.uri, "text/plain")
 	return true
 end
