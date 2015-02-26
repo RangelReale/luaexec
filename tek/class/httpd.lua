@@ -42,10 +42,12 @@ local unpack = unpack
 -------------------------------------------------------------------------------
 
 local HTTPD = Server. module("tek.class.httpd", "tek.class.server")
-HTTPD._VERSION = "httpd 1.3"
+HTTPD._VERSION = "httpd 1.4"
 
 local function readonly(t)
-	return setmetatable(t, { __newindex = function() error("read-only") end })
+	return setmetatable(t, { __newindex = function() 
+		error("globals are forbidden - the environment is read-only") 
+	end })
 end
 
 -------------------------------------------------------------------------------
@@ -59,6 +61,7 @@ function HTTPD.new(class, self)
 	self.Address = self.Address or "127.0.0.1"
 	self.ClientTimeout = self.ClientTimeout or false -- 5
 	self.DocumentRoot = self.DocumentRoot or "htdocs"
+	self.DoDirList = self.DoDirList == nil or self.DoDirList
 	self.MIMEFileExts = self.MIMEFileExts or
 	{ 
 		txt = "text/plain",
@@ -94,7 +97,7 @@ function HTTPD.new(class, self)
 	self.ServerName = self.ServerName or "server-http"
 	self.ServerSocket = false
 	self.WebData = { State = { Server = self } }
-	self.WebEnvironment = readonly 
+	self.WebEnvironment = self.WebEnvironment or
 	{ 
 		abs = math.abs,
 		assert = assert,
@@ -105,7 +108,7 @@ function HTTPD.new(class, self)
 		error = error,
 		floor = math.floor,
 		insert = table.insert,
-		loadstring = loadstring,
+-- 		loadstring = loadstring,
 		pairs = pairs,
 		print = function(...)
 			for i = 1, select('#', ...) do
@@ -124,6 +127,11 @@ function HTTPD.new(class, self)
 		type = type,
 		unpack = unpack,
 	}
+	self.ExtraWebEnvironment = self.ExtraWebEnvironment or { }
+	for key, val in pairs(self.ExtraWebEnvironment) do
+		self.WebEnvironment[key] = val
+	end
+	self.WebEnvironment = readonly(self.WebEnvironment)
 	
 	if not self.DocumentRoot:match("^/") then
 		self.DocumentRoot = lfs.currentdir() .. "/".. self.DocumentRoot
@@ -157,6 +165,10 @@ function HTTPD:bind()
 	assert(fd:bind(self.Address, self.Port))
 	assert(fd:listen())
 	self.ServerSocket = fd
+	
+	self:registerServer(self.ServerSocket, self.ServerName,
+		self.serveClient, self)
+	
 	return fd
 end
 
@@ -166,6 +178,7 @@ end
 
 function HTTPD:unbind()
 	if self.ServerSocket then
+		self:unregister(self.ServerName)
 		self.ServerSocket:close()
 		self.ServerSocket = false
 	end
@@ -184,8 +197,8 @@ end
 -------------------------------------------------------------------------------
 
 function HTTPD:docToRealPath(vpath)
-	local path = self:getDocumentRoot() .. vpath
-	return path
+	local res = vpath and self:getDocumentRoot() .. vpath
+	return res
 end
 
 -------------------------------------------------------------------------------
@@ -209,14 +222,22 @@ end
 function HTTPD:doFileRequest(fd, req)
 	local ctype = "text/html"
 	local c = { }
-	local fname = self:docToRealPath(req.uri)
+	
+	local uri = req.uri:match("^([^?]*)%?(.*)$") or req.uri
+	uri = uri:match("^(.-)/?$") or uri
+	
+	local fname = self:docToRealPath(uri)
 	if lfs.attributes(fname, "mode") == "directory" then
-		local di = self:getDirIterator(req.uri)
+		if not self.DoDirList then
+			self:logRequest(fd, req, "403")
+			return self:sendResult(fd, "Forbidden", "text/plain")
+		end
+		local di = self:getDirIterator(uri)
 		if di then
 			for entry in di do
-				local fname = self:docToRealPath(req.uri .. "/" .. entry)
-				local linkpath = req.uri == "/" and entry or 
-					req.uri .. "/" .. entry
+				local fname = self:docToRealPath(uri .. "/" .. entry)
+				local linkpath = uri == "/" and entry or 
+					uri .. "/" .. entry
 				if lfs.attributes(fname, "mode") == "directory" then
 					insert(c, '<a href="' .. linkpath .. '">' .. entry .. 
 						'/</a><br />\n')
@@ -393,12 +414,16 @@ function HTTPD:serveClient(fd)
 	end
 
 	local handler, hnd_name, scriptpath, scriptname, fname, 
-		pathinfo, querystring, fmode
-
+		pathinfo, fmode
+	
+	local uri, querystring = req.uri:match("^([^?]*)%?(.*)$")
+	if not uri then
+		uri = req.uri
+	end
 	for trynum = 1, 2 do
 		for hnd_match, rec in pairs(self.Handlers) do
-			scriptpath, scriptname, pathinfo, querystring = req.uri:match(
-				"^(.-)(/[^/]*" .. hnd_match .. ")%f[%A](/?[^?]*)%??(.*)$")
+			scriptpath, scriptname, pathinfo = uri:match(
+				"^(.-)(/[^/]*" .. hnd_match .. ")%f[%A](/?[^?]*)$")
 			if scriptpath then
 				handler = rec
 				hnd_name = handler.name or hnd_match
@@ -406,8 +431,10 @@ function HTTPD:serveClient(fd)
 				break
 			end
 		end
-		fname = self:docToRealPath(fname or req.uri)
-		fmode = lfs.attributes(fname, "mode")
+		fname = self:docToRealPath(fname or uri)
+		if fname then
+			fmode = lfs.attributes(fname, "mode")
+		end
 		if handler or fmode == "file" or trynum == 2 then
 			break
 		end
@@ -416,10 +443,10 @@ function HTTPD:serveClient(fd)
 			local idxname = self.DefaultIndex[i]
 			local fullname = fname .. "/" .. idxname
 			if lfs.attributes(fullname, "mode") == "file" then
-				if req.uri:match("/$") then
-					req.uri = req.uri .. idxname
+				if uri:match("/$") then
+					uri = uri .. idxname
 				else
-					req.uri = req.uri .. "/" .. idxname
+					uri = uri .. "/" .. idxname
 				end
 				idxfound = true
 				fname = nil
@@ -443,7 +470,7 @@ function HTTPD:serveClient(fd)
 	end
 	
 	self:logRequest(fd, req, "404")
-	self:sendResult(fd, "No such file or directory: " .. req.uri, "text/plain")
+	self:sendResult(fd, "No such file or directory: " .. uri, "text/plain")
 	return true
 end
 
@@ -453,8 +480,6 @@ end
 
 function HTTPD:run()
 	self:bind()
-	self:registerServer(self.ServerSocket, self.ServerName,
-		self.serveClient, self)
 	local res = Server.run(self)
 	self:unbind()
 	return res

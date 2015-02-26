@@ -1,6 +1,11 @@
 
 == LuaExec Changelog ==
 
+ * HTTPD class: Added DoDirList attribute, added support for 403 Forbidden,
+ added ExtraWebEnvironment, added default index including handler invocation,
+ added logging
+ * Debug: added NOTE level, better adaptability for e.g. syslog
+
 === 0.83: ===
 
  * Changes to the class and documentation system, no longer requires

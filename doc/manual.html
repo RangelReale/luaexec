@@ -5,7 +5,7 @@
 	<head>
 		<title>Reference Manual</title>
 		<link rel="stylesheet" href="manual.css" />
-		<meta name="created" content="02-Feb-2015" />
+		<meta name="created" content="26-Feb-2015" />
 	</head>
 	<body>
 		<h1>
@@ -666,7 +666,7 @@ class = superclass()
 			</p>
 			<hr class="page-break" />
 		</div>
-		<div class="node"><h2><a name="tek.class.server" id="tek.class.server">Server (v2.3)</a></h2>
+		<div class="node"><h2><a name="tek.class.server" id="tek.class.server">Server (v2.4)</a></h2>
 			<div class="definition"><dfn>OVERVIEW</dfn>
 				<blockquote>
 					<p>
@@ -991,7 +991,7 @@ SOURCE=-s/A/M,DEST=-d/A/K
 			</p>
 			<hr class="page-break" />
 		</div>
-		<div class="node"><h2><a name="tek.lib.debug" id="tek.lib.debug">Debug (v5.3)</a></h2>
+		<div class="node"><h2><a name="tek.lib.debug" id="tek.lib.debug">Debug (v6.0)</a></h2>
 			<div class="definition"><dfn>OVERVIEW</dfn>
 				<blockquote>
 					<p>
@@ -1011,13 +1011,24 @@ SOURCE=-s/A/M,DEST=-d/A/K
 						</tr>
 						<tr>
 							<td class="column1">
-								4
+								3
 							</td>
 							<td class="column2">
 								INFO
 							</td>
 							<td class="column3">
 								informational messages, notices
+							</td>
+						</tr>
+						<tr>
+							<td class="column1">
+								4
+							</td>
+							<td class="column2">
+								NOTE
+							</td>
+							<td class="column3">
+								important notices
 							</td>
 						</tr>
 						<tr>
@@ -1092,6 +1103,9 @@ db.out = io.open(&quot;logfile&quot;, &quot;w&quot;)
 						</li>
 						<li style="list-style-type: none">
 							<a href="#debug:info"><code>debug.info()</code></a> - Prints a text in the <code>INFO</code> debug level
+						</li>
+						<li style="list-style-type: none">
+							<a href="#debug:note"><code>debug.note()</code></a> - Prints a text in the <code>NOTE</code> debug level
 						</li>
 						<li style="list-style-type: none">
 							<a href="#debug:print"><code>debug.print()</code></a> - Prints a text in the specified debug level
@@ -1171,6 +1185,12 @@ db.out = io.open(&quot;logfile&quot;, &quot;w&quot;)
 			</p>
 			<hr />
 		</div>
+		<div class="node"><h3><a name="debug:note" id="debug:note"><code>debug.note(msg, ...)</code></a></h3>
+			<p>
+				Prints formatted debug info with <code>NOTE</code> debug level
+			</p>
+			<hr />
+		</div>
 		<div class="node"><h3><a name="debug:print" id="debug:print"><code>debug.print(lvl, msg, ...)</code></a></h3>
 			<p>
 				Prints formatted text if the global debug level
@@ -1200,7 +1220,7 @@ db.out = io.open(&quot;logfile&quot;, &quot;w&quot;)
 			</p>
 			<hr />
 		</div>
-		<div class="node"><h3><a name="debug:wrout" id="debug:wrout"><code>debug.wrout(...)</code></a></h3>
+		<div class="node"><h3><a name="debug:wrout" id="debug:wrout"><code>debug.wrout(lvl, ...)</code></a></h3>
 			<p>
 				Debug output function, by default
 			</p>
@@ -1494,7 +1514,7 @@ function(...) out:write(...) end
 			</p>
 			<hr class="page-break" />
 			<p>
-				Document generated on Mon Feb  2 16:12:08 2015 using gendoc.lua version 1.5
+				Document generated on Thu Feb 26 21:31:41 2015 using gendoc.lua version 1.5
 			</p>
 		</div>
 	</body>

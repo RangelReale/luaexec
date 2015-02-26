@@ -49,7 +49,7 @@ local unpack = unpack or table.unpack
 local xpcall = have_coxpcall and coxpcall.xpcall or xpcall
 
 local Server = Class. module("tek.class.server", "tek.class")
-Server._VERSION = "Server 2.3"
+Server._VERSION = "Server 2.4"
 
 if have_copas then
 	copas.autoclose = false
@@ -383,5 +383,13 @@ function Server:unregister(name)
 	end
 	error("could not find fd")
 end
+
+-------------------------------------------------------------------------------
+--	shutdown() - try to orderly shut down services
+-------------------------------------------------------------------------------
+
+function Server:shutdown()
+end
+
 
 return Server

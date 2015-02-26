@@ -26,7 +26,7 @@ CC = $(CROSS_COMPILE)gcc -fpic # -DTSYS_POSIX
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 # CC = $(CROSS_COMPILE)gcc -DWIN32 -DWINVER=0x0400 -D_WIN32_WINNT=0x0400
-# CC += -DHAL_USE_ATOMICS # comment this out with very old versions of MinGW
+# CC += -DHAL_USE_ATOMICS # leave commented with very old versions of MinGW
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Cross compilation:
@@ -68,7 +68,7 @@ CC_LD_RT = -Wl,-rpath,
 # CC_LD_RT = -R
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Mac OS X:
+# Mac OS X: See also below MODCFLAGS
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 # PLATFORM_LIBS =
@@ -140,8 +140,6 @@ MODCFLAGS = -shared -L $(LIBDIR) $(LDFLAGS)
 # For Mac OS X:
 # MODCFLAGS = -bundle -undefined dynamic_lookup -L $(LIBDIR) $(LDFLAGS)
 BINCFLAGS = $(DEBUG) $(WARN) $(OPT) $(INCL) $(EXTRADEFS) $(LDFLAGS)
-# for compilation of Lua code:
-LUAARCH = -m64 # -m32 for 32bit, -m64 for 64bit architecture
 
 #------------------------------------------------------------------------------
 # Build tools:
