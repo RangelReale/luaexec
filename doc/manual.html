@@ -5,7 +5,7 @@
 	<head>
 		<title>Reference Manual</title>
 		<link rel="stylesheet" href="manual.css" />
-		<meta name="created" content="26-Feb-2015" />
+		<meta name="created" content="01-Mar-2015" />
 	</head>
 	<body>
 		<h1>
@@ -27,12 +27,26 @@
 								</li>
 								<li>
 									<a href="#tek.class.httprequest">HTTPRequest</a> 
+									<blockquote>
+										<ul>
+											<li>
+												<a href="#tek.class.sessionrequest">SessionRequest</a> 
+											</li>
+										</ul>
+									</blockquote>
 								</li>
 								<li>
 									<a href="#tek.class.markup">Markup</a> 
 								</li>
 								<li>
 									<a href="#tek.class.server">Server</a> 
+									<blockquote>
+										<ul>
+											<li>
+												<a href="#tek.class.httpd">HTTPD</a> 
+											</li>
+										</ul>
+									</blockquote>
 								</li>
 								<li>
 									<a href="#tek.class.wtf">WTF</a> 
@@ -308,13 +322,166 @@ class = superclass()
 			</p>
 			<hr class="page-break" />
 		</div>
-		<div class="node"><h2><a name="tek.class.httprequest" id="tek.class.httprequest">HTTPRequest (v2.2)</a></h2>
+		<div class="node"><h2><a name="tek.class.httpd" id="tek.class.httpd">HTTPD (v2.0)</a></h2>
 			<div class="definition"><dfn>OVERVIEW</dfn>
 				<blockquote>
 					<p>
 						<a href="#ClassOverview">ClassOverview</a> :
 						<a href="#tek.class">Class</a> /
-						HTTPRequest 
+						<a href="#tek.class.server">Server</a> /
+						HTTPD 
+					</p>
+					<p>
+						This class implements a HTTP server.
+					</p>
+				</blockquote>
+			</div>
+			<div class="definition"><dfn>MEMBERS</dfn>
+				<blockquote>
+					<ul>
+						<li style="list-style-type: none">
+							<code>Address &#091;IG&#093;</code> (string)
+							<blockquote>
+								<p>
+									Host/address to bind to, default <code>&quot;localhost&quot;</code> 
+								</p>
+							</blockquote>
+						</li>
+						<li style="list-style-type: none">
+							<code>DefaultIndex &#091;ISG&#093;</code> (table)
+							<blockquote>
+								<p>
+									Numerically indexed table of filenames accepted for default index
+									documents. Default <code>&quot;index.lhtml&quot;</code>, <code>&quot;index.lua&quot;</code>,
+									<code>&quot;index.html&quot;</code> 
+								</p>
+							</blockquote>
+						</li>
+						<li style="list-style-type: none">
+							<code>DirList &#091;ISG&#093;</code> (string or boolean)
+							<blockquote>
+								<p>
+									Directory listing options, boolean or the key <code>&quot;l&quot;</code>.
+									Default <code>&quot;l&quot;</code>, directories will be listed
+								</p>
+							</blockquote>
+						</li>
+						<li style="list-style-type: none">
+							<code>DocumentRoot &#091;ISG&#093;</code> (string)
+							<blockquote>
+								<p>
+									Document root path, default <code>&quot;htdocs&quot;</code> 
+								</p>
+							</blockquote>
+						</li>
+						<li style="list-style-type: none">
+							<code>ExtraWebEnvironment &#091;IG&#093;</code> (table)
+							<blockquote>
+								<p>
+									Table to be mixed into default web environment
+								</p>
+							</blockquote>
+						</li>
+						<li style="list-style-type: none">
+							<code>Handlers &#091;ISG&#093;</code> (table)
+							<blockquote>
+								<p>
+									Table keyed by filename extensions that invoke a Lua handler.
+									The value is a table of optional arguments reserved for future
+									use and should be empty	for now. Default <code>&quot;%.lua&quot;</code>, <code>&quot;%.lhtml&quot;</code> 
+								</p>
+							</blockquote>
+						</li>
+						<li style="list-style-type: none">
+							<code>Listen &#091;IG&#093;</code> (string)
+							<blockquote>
+								<p>
+									Combined Host and port specification, e.g. <code>localhost:8080</code> 
+								</p>
+							</blockquote>
+						</li>
+						<li style="list-style-type: none">
+							<code>Port &#091;IG&#093;</code> (number)
+							<blockquote>
+								<p>
+									Port to bind to, default <code>8080</code> 
+								</p>
+							</blockquote>
+						</li>
+						<li style="list-style-type: none">
+							<code>RequestArgs &#091;ISG&#093;</code> (table)
+							<blockquote>
+								<p>
+									Table of arguments to be mixed into requests
+								</p>
+							</blockquote>
+						</li>
+						<li style="list-style-type: none">
+							<code>RequestClassName &#091;ISG&#093;</code> (string)
+							<blockquote>
+								<p>
+									Name of the class that provides requests. Default
+									<code>&quot;tek.class.httprequest&quot;</code> 
+								</p>
+							</blockquote>
+						</li>
+						<li style="list-style-type: none">
+							<code>ServerName &#091;IG&#093;</code> (string)
+							<blockquote>
+								<p>
+									Name under which the server will be registered, default
+									<code>&quot;server-http&quot;</code> 
+								</p>
+							</blockquote>
+						</li>
+					</ul>
+				</blockquote>
+			</div>
+			<div class="definition"><dfn>IMPLEMENTS</dfn>
+				<blockquote>
+					<ul>
+						<li style="list-style-type: none">
+							<a href="#HTTPD:bind"><code>HTTPD:bind()</code></a> - binds to <code>Address</code> and <code>Port</code> 
+						</li>
+						<li style="list-style-type: none">
+							<a href="#HTTPD:unbind"><code>HTTPD:unbind()</code></a> - unbinds server
+						</li>
+					</ul>
+				</blockquote>
+			</div>
+			<div class="definition"><dfn>OVERRIDES</dfn>
+				<blockquote>
+					<ul>
+						<li style="list-style-type: none">
+							<a href="#Class:new"><code>Class.new()</code></a> 
+						</li>
+						<li style="list-style-type: none">
+							<a href="#Server:run"><code>Server:run()</code></a> 
+						</li>
+					</ul>
+				</blockquote>
+				<hr />
+			</div>
+		</div>
+		<div class="node"><h3><a name="HTTPD:bind" id="HTTPD:bind"><code>success = HTTPD:bind()</code></a></h3>
+			<p>
+				Bind server to <code>Address</code> and <code>Port</code>.
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="HTTPD:unbind" id="HTTPD:unbind"><code>HTTPD:unbind()</code></a></h3>
+			<p>
+				Unbinds server, frees server socket.
+			</p>
+			<hr class="page-break" />
+		</div>
+		<div class="node"><h2><a name="tek.class.httprequest" id="tek.class.httprequest">HTTPRequest (v3.0)</a></h2>
+			<div class="definition"><dfn>OVERVIEW</dfn>
+				<blockquote>
+					<p>
+						<a href="#ClassOverview">ClassOverview</a> :
+						<a href="#tek.class">Class</a> /
+						HTTPRequest / <select onchange="if (this.value != '') window.location.href = this.value; this.selectedIndex = 0;"><option value="">1 subclasses</option><option value="#tek.class.sessionrequest">SessionRequest</option></select>
 					</p>
 				</blockquote>
 			</div>
@@ -337,6 +504,14 @@ class = superclass()
 								</p>
 							</blockquote>
 						</li>
+						<li style="list-style-type: none">
+							<code>RequestsGlobal &#091;ISG&#093;</code> (table)
+							<blockquote>
+								<p>
+									Global variables shared by all requests
+								</p>
+							</blockquote>
+						</li>
 					</ul>
 				</blockquote>
 			</div>
@@ -347,22 +522,22 @@ class = superclass()
 							<a href="#HTTPRequest:decodeURL"><code>HTTPRequest.decodeURL()</code></a> - Decodes an URL-encoded string
 						</li>
 						<li style="list-style-type: none">
-							<a href="#HTTPRequest:getEnv"><code>HTTPRequest:getEnv()</code></a> - Gets a server environment variable
-						</li>
-						<li style="list-style-type: none">
 							<a href="#HTTPRequest:getArgs"><code>HTTPRequest:getArgs()</code></a> - Gets table of request arguments
 						</li>
 						<li style="list-style-type: none">
 							<a href="#HTTPRequest:getDocument"><code>HTTPRequest:getDocument()</code></a> - Gets table of document properties
 						</li>
 						<li style="list-style-type: none">
+							<a href="#HTTPRequest:getEnv"><code>HTTPRequest:getEnv()</code></a> - Gets a server environment variable
+						</li>
+						<li style="list-style-type: none">
 							<a href="#HTTPRequest:getGlobal"><code>HTTPRequest:getGlobal()</code></a> - Gets persistent, global data from server
 						</li>
 						<li style="list-style-type: none">
-							<a href="#HTTPRequest:insertArgString"><code>HTTPRequest:insertArgString()</code></a> - Insert arguments, e.g. QUERY_STRING
+							<a href="#HTTPRequest:insertArgString"><code>HTTPRequest:insertArgString()</code></a> - Insert QUERY_STRING arguments
 						</li>
 						<li style="list-style-type: none">
-							<a href="#HTTPRequest:setEnv"><code>HTTPRequest:setEnv()</code></a> - Sets an server environment variable
+							HTTPRequest:write(s) - Sets an server environment variable
 						</li>
 					</ul>
 				</blockquote>
@@ -417,9 +592,9 @@ class = superclass()
 			</p>
 			<hr />
 		</div>
-		<div class="node"><h3><a name="HTTPRequest:setEnv" id="HTTPRequest:setEnv"><code>setEnv(key, val)</code></a></h3>
+		<div class="node"><h3><a name="HTTPRequest:write" id="HTTPRequest:write"><code>write(s)</code></a></h3>
 			<p>
-				Set an environment (server) variable
+				Write data to output stream
 			</p>
 			<hr class="page-break" />
 		</div>
@@ -672,7 +847,7 @@ class = superclass()
 					<p>
 						<a href="#ClassOverview">ClassOverview</a> :
 						<a href="#tek.class">Class</a> /
-						Server 
+						Server / <select onchange="if (this.value != '') window.location.href = this.value; this.selectedIndex = 0;"><option value="">1 subclasses</option><option value="#tek.class.httpd">HTTPD</option></select>
 					</p>
 					<p>
 						This class implements a server.
@@ -778,7 +953,114 @@ class = superclass()
 			</p>
 			<hr class="page-break" />
 		</div>
-		<div class="node"><h2><a name="tek.class.wtf" id="tek.class.wtf">WTF (v2.3)</a></h2>
+		<div class="node"><h2><a name="tek.class.sessionrequest" id="tek.class.sessionrequest">SessionRequest (v3.0)</a></h2>
+			<div class="definition"><dfn>OVERVIEW</dfn>
+				<blockquote>
+					<p>
+						<a href="#ClassOverview">ClassOverview</a> :
+						<a href="#tek.class">Class</a> /
+						<a href="#tek.class.httprequest">HTTPRequest</a> /
+						SessionRequest 
+					</p>
+				</blockquote>
+			</div>
+			<div class="definition"><dfn>MEMBERS</dfn>
+				<blockquote>
+					<ul>
+						<li style="list-style-type: none">
+							<code>CookieName &#091;ISG&#093;</code> (string)
+							<blockquote>
+								<p>
+									Default basename for cookies, default <code>&quot;luawtf&quot;</code> 
+								</p>
+							</blockquote>
+						</li>
+						<li style="list-style-type: none">
+							<code>SessionExpirationTime &#091;ISG&#093;</code> (number)
+							<blockquote>
+								<p>
+									Number of seconds before a session expires, default: 600
+								</p>
+							</blockquote>
+						</li>
+						<li style="list-style-type: none">
+							<code>Sessions &#091;ISG&#093;</code> (table)
+							<blockquote>
+								<p>
+									Table of sessions, indexed by session Id. Must be provided during
+									initialization so that session states can be held and found later
+								</p>
+							</blockquote>
+						</li>
+					</ul>
+				</blockquote>
+			</div>
+			<div class="definition"><dfn>IMPLEMENTS</dfn>
+				<blockquote>
+					<ul>
+						<li style="list-style-type: none">
+							<a href="#SessionRequest:getRawId"><code>SessionRequest.getRawId()</code></a> - Get binary data for unique session Id
+						</li>
+						<li style="list-style-type: none">
+							<a href="#SessionRequest:createSessionCookie"><code>SessionRequest:createSessionCookie()</code></a> - Create session cookie string
+						</li>
+						<li style="list-style-type: none">
+							<a href="#SessionRequest:deleteSession"><code>SessionRequest:deleteSession()</code></a> - Delete current session
+						</li>
+						<li style="list-style-type: none">
+							<a href="#SessionRequest:getSession"><code>SessionRequest:getSession()</code></a> - Find session (by session Id in cookie)
+						</li>
+						<li style="list-style-type: none">
+							<a href="#SessionRequest:newSession"><code>SessionRequest:newSession()</code></a> - Create new session
+						</li>
+					</ul>
+				</blockquote>
+			</div>
+			<div class="definition"><dfn>OVERRIDES</dfn>
+				<blockquote>
+					<ul>
+						<li style="list-style-type: none">
+							<a href="#Class:new"><code>Class.new()</code></a> 
+						</li>
+					</ul>
+				</blockquote>
+				<hr />
+			</div>
+		</div>
+		<div class="node"><h3><a name="SessionRequest:createSessionCookie" id="SessionRequest:createSessionCookie"><code>cookie = createSessionCookie([expire])</code></a></h3>
+			<p>
+				Create session cookie string
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="SessionRequest:deleteSession" id="SessionRequest:deleteSession"><code>deleteSession()</code></a></h3>
+			<p>
+				Delete the current session
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="SessionRequest:getRawId" id="SessionRequest:getRawId"><code>getRawId([len[, rlen]])</code></a></h3>
+			<p>
+				Get unique binary data of given length to be
+				used for a session Id. <code>rlen</code> is the desired number of bytes of entropy,
+				the regular length (default 6) is usually made up of pseudo random data.
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="SessionRequest:getSession" id="SessionRequest:getSession"><code>session, sid = getSession()</code></a></h3>
+			<p>
+				Find session by session Id in cookie
+			</p>
+			<hr />
+		</div>
+		<div class="node"><h3><a name="SessionRequest:newSession" id="SessionRequest:newSession"><code>sid = newSession(sessiondata[, sid])</code></a></h3>
+			<p>
+				Place <code>sessiondata</code> table in a new
+				session
+			</p>
+			<hr class="page-break" />
+		</div>
+		<div class="node"><h2><a name="tek.class.wtf" id="tek.class.wtf">WTF (v3.0)</a></h2>
 			<div class="definition"><dfn>OVERVIEW</dfn>
 				<blockquote>
 					<p>
@@ -811,17 +1093,6 @@ class = superclass()
 						</li>
 					</ul>
 				</blockquote>
-			</div>
-			<div class="definition"><dfn>IMPLEMENTS</dfn>
-			</div>
-			<div class="definition"><dfn>OVERRIDES</dfn>
-				<blockquote>
-					<ul>
-						<li style="list-style-type: none">
-							<a href="#Class:new"><code>Class.new()</code></a> 
-						</li>
-					</ul>
-				</blockquote>
 				<hr />
 			</div>
 		</div>
@@ -843,7 +1114,7 @@ WTF:new { Environment = _G,
 </pre>
 			<hr class="page-break" />
 		</div>
-		<div class="node"><h2><a name="tek.lib.args" id="tek.lib.args">Args (v2.4)</a></h2>
+		<div class="node"><h2><a name="tek.lib.args" id="tek.lib.args">Args (v2.5)</a></h2>
 			<div class="definition"><dfn>OVERVIEW</dfn>
 				<blockquote>
 					<p>
@@ -1514,7 +1785,7 @@ function(...) out:write(...) end
 			</p>
 			<hr class="page-break" />
 			<p>
-				Document generated on Thu Feb 26 21:31:41 2015 using gendoc.lua version 1.5
+				Document generated on Sun Mar  1 18:29:00 2015 using gendoc.lua version 1.5
 			</p>
 		</div>
 	</body>

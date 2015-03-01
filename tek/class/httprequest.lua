@@ -13,25 +13,28 @@
 --			Initial environment of server variables
 --		- {{MaxContentLength [ISG]}} (number)
 --			Maximum size allowed for POST, in bytes. Default: 1000000
+--		- {{RequestsGlobal [ISG]}} (table)
+--			Global variables shared by all requests
 --
 --	IMPLEMENTS::
 --		- HTTPRequest.decodeURL() - Decodes an URL-encoded string
---		- HTTPRequest:getEnv() - Gets a server environment variable
 --		- HTTPRequest:getArgs() - Gets table of request arguments
 --		- HTTPRequest:getDocument() - Gets table of document properties
+--		- HTTPRequest:getEnv() - Gets a server environment variable
 --		- HTTPRequest:getGlobal() - Gets persistent, global data from server
---		- HTTPRequest:insertArgString() - Insert arguments, e.g. QUERY_STRING
---		- HTTPRequest:setEnv() - Sets an server environment variable
+--		- HTTPRequest:insertArgString() - Insert QUERY_STRING arguments
+--		- HTTPRequest:write(s) - Sets an server environment variable
 --
 --	OVERRIDES::
 --		- Class.new()
 --
 -------------------------------------------------------------------------------
 
-local lfs = require "lfs"
+-- local lfs = require "lfs"
 local Class = require "tek.class"
 local assert = assert
 local char = string.char
+local error = error
 local getenv = os.getenv
 local insert = table.insert
 local pairs = pairs
@@ -42,9 +45,16 @@ local tonumber = tonumber
 local type = type
 
 local HTTPRequest = Class.module("tek.class.httprequest", "tek.class")
-HTTPRequest._VERSION = "HTTPRequest 2.2"
+HTTPRequest._VERSION = "HTTPRequest 3.0"
+
 
 local DEF_MAX_CONTENT_LENGTH = 1000000
+
+local function readonly(t)
+	return setmetatable(t, { __newindex = function() 
+		error("request globals are read-only") 
+	end })
+end
 
 -------------------------------------------------------------------------------
 --	decoded = decodeURL(url): Decode URL-encoded string
@@ -84,12 +94,12 @@ end
 function HTTPRequest.new(class, self)
 	self = self or { }
 	self.Args = false
-	self.DefaultIndex = self.DefaultIndex or "index.html index.lua"
+-- 	self.DefaultIndex = self.DefaultIndex or "index.html index.lua"
 	self.Document = false
 	self.Environment = self.Environment or { }
 	self.MaxContentLength = self.MaxContentLength or DEF_MAX_CONTENT_LENGTH
+	self.RequestsGlobal = self.RequestsGlobal or readonly { }
 	self.write = self.write or class.write
-	self.UserData = self.UserData or false
 	self = Class.new(class, self)
 	setmetatable(self.Environment, {
 		__index = function(tab, key)
@@ -110,7 +120,7 @@ function HTTPRequest:getHTTPVariable(key)
 end
 
 -------------------------------------------------------------------------------
---	write:
+--	write(s): Write data to output stream
 -------------------------------------------------------------------------------
 
 function HTTPRequest:write(s)
@@ -126,24 +136,24 @@ function HTTPRequest:getEnv(key)
 end
 
 -------------------------------------------------------------------------------
---	setEnv(key, val): Set an environment (server) variable
+--	setEnv(key, val) - Set an environment (server) variable
 -------------------------------------------------------------------------------
-
-function HTTPRequest:setEnv(key, val)
-	if key == "PATH_TRANSLATED" then
-		if stat(val, "mode") ~= "file" then
-			-- emulate default index file:
-			for ext in self.DefaultIndex:gmatch("(%S+)%s?") do
-				local fname = val .. "/" .. ext
-				if stat(fname, "mode") == "file" then
-					val = fname
-					break
-				end
-			end
-		end
-	end
-	self.Environment[key] = val
-end
+--
+-- function HTTPRequest:setEnv(key, val)
+-- 	if key == "PATH_TRANSLATED" then
+-- 		if stat(val, "mode") ~= "file" then
+-- 			-- emulate default index file:
+-- 			for ext in self.DefaultIndex:gmatch("(%S+)%s?") do
+-- 				local fname = val .. "/" .. ext
+-- 				if stat(fname, "mode") == "file" then
+-- 					val = fname
+-- 					break
+-- 				end
+-- 			end
+-- 		end
+-- 	end
+-- 	self.Environment[key] = val
+-- end
 
 -------------------------------------------------------------------------------
 --	args = getArgs(): Get table of request arguments
@@ -203,7 +213,7 @@ end
 -------------------------------------------------------------------------------
 
 function HTTPRequest:getGlobal()
-	return self.Database.State
+	return self.RequestsGlobal
 end
 
 return HTTPRequest

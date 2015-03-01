@@ -16,11 +16,6 @@
 --			The function environment passed to scripts.
 --			Default: an empty environment
 --
---	IMPLEMENTS::
---
---	OVERRIDES::
---		- Class.new()
---
 -------------------------------------------------------------------------------
 
 local Class = require "tek.class"
@@ -44,7 +39,7 @@ local traceback = debug.traceback
 local type = type
 
 local WTF = Class. module("tek.class.wtf", "tek.class")
-WTF._VERSION = "WTF 2.3"
+WTF._VERSION = "WTF 3.0"
 
 -------------------------------------------------------------------------------
 --	encodeurl: encode string to url; optionally specify a string with a
@@ -76,7 +71,7 @@ function WTF.new(class, self)
 	self.Buffered = self.Buffered or false
 	self.Environment = self.Environment or { }
 	self.CommonPath = self.CommonPath or ""
-	self.CommonPathOverlay = self.CommonPathOverlay or false
+-- 	self.CommonPathOverlay = self.CommonPathOverlay or false
 	return Class.new(class, self)
 end
 
@@ -120,9 +115,9 @@ function WTF:createEnvironment(req)
 		dofile = function(fname, ...)
 			fname = fname:match("/?([^/]+)$")
 			local f
-			if self.CommonPathOverlay then
-				f = loadfile(self.CommonPathOverlay .. fname, "bt", envtab)
-			end
+-- 			if self.CommonPathOverlay then
+-- 				f = loadfile(self.CommonPathOverlay .. fname, "bt", envtab)
+-- 			end
 			f = f or loadfile(self.CommonPath .. fname, "bt", envtab)
 			if f then
 				if setfenv then
@@ -137,9 +132,9 @@ function WTF:createEnvironment(req)
 		flush = int_flush,
 		out = function(s)
 			if Buffered then
-				insert(Buffers, s)
+				insert(Buffers, tostring(s))
 			else
-				int_out(s)
+				int_out(tostring(s))
 			end
 		end,
 		redirect = function(url)
@@ -151,7 +146,19 @@ function WTF:createEnvironment(req)
 				"\r\n\r\n") 
 		end,
 		setbuffered = function(onoff) Buffered = onoff end,
-		Request = req
+		Request = {
+			getArgs = function() return req:getArgs() end,
+			getEnv = function(self, key) return req:getEnv(key) end,
+			getGlobal = function() return req:getGlobal() end,
+			getSession = function() return req:getSession() end,
+			newSession = function(self, sdata, skey) 
+				return req:newSession(sdata, skey) 
+			end,
+			createSessionCookie = function(self, expire)
+				return req:createSessionCookie(expire)
+			end,
+			deleteSession = function() return req:deleteSession() end,
+		}
 	}
 	return setmetatable(envtab, { 
 		__index = self.Environment,
@@ -185,11 +192,11 @@ function WTF:doRequest(req)
 		local num = 1
 		local fullname = document.ScriptPath .. scriptfile
 		local defaultname
-		if document.OverlayScript then
-			defaultname = fullname
-			fullname = document.OverlayScript
-			num = 2
-		end
+-- 		if document.OverlayScript then
+-- 			defaultname = fullname
+-- 			fullname = document.OverlayScript
+-- 			num = 2
+-- 		end
 		for i = 1, num do
 			local fh = open(fullname)
 			if fh then

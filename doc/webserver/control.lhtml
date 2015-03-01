@@ -1,5 +1,4 @@
 <%
-
 addbuffer "Content-Type: text/html\r\n\r\n"
 %>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" 
@@ -20,7 +19,7 @@ addbuffer "Content-Type: text/html\r\n\r\n"
 		<h2>Send server some message</h2>
 		<div>
 			<form action="/webserver/sendmsg.lua" method="post" accept-charset="utf-8">
-				<input class="fixed" type="text" size="20" maxlength="60" name="servermsg" value="hello" />
+				<input class="fixed" type="text" size="20" maxlength="60" name="servermsg" value="hello main program!" />
 				<br />
 				<input type="submit" name="submit" value="Submit" />
 			</form>

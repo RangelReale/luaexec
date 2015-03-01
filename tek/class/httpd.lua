@@ -3,13 +3,59 @@
 --	tek.class.httpd
 --	Written and (C) by Timm S. Mueller <tmueller@schulze-mueller.de>
 --
+--	OVERVIEW::
+--		[[#ClassOverview]] :
+--		[[#tek.class : Class]] /
+--		[[#tek.class.server : Server]] /
+--		HTTPD ${subclasses(HTTPD)}
+--
+--		This class implements a HTTP server.
+--
+--	MEMBERS::
+--		- {{Address [IG]}} (string)
+--			Host/address to bind to, default {{"localhost"}}
+--		- {{DefaultIndex [ISG]}} (table)
+--			Numerically indexed table of filenames accepted for default index
+--			documents. Default {{"index.lhtml"}}, {{"index.lua"}},
+--			{{"index.html"}}
+--		- {{DirList [ISG]}} (string or boolean)
+--			Directory listing options, boolean or the key {{"l"}}.
+--			Default {{"l"}}, directories will be listed
+--		- {{DocumentRoot [ISG]}} (string)
+--			Document root path, default {{"htdocs"}}
+--		- {{ExtraWebEnvironment [IG]}} (table)
+--			Table to be mixed into default web environment
+--		- {{Handlers [ISG]}} (table)
+--			Table keyed by filename extensions that invoke a Lua handler.
+--			The value is a table of optional arguments reserved for future
+--			use and should be empty	for now. Default {{"%.lua"}}, {{"%.lhtml"}}
+--		- {{Listen [IG]}} (string)
+--			Combined Host and port specification, e.g. {{localhost:8080}}
+--		- {{Port [IG]}} (number)
+--			Port to bind to, default {{8080}}
+--		- {{RequestArgs [ISG]}} (table)
+--			Table of arguments to be mixed into requests
+--		- {{RequestClassName [ISG]}} (string)
+--			Name of the class that provides requests. Default
+--			{{"tek.class.httprequest"}}
+--		- {{ServerName [IG]}} (string)
+--			Name under which the server will be registered, default
+--			{{"server-http"}}
+--
+--	IMPLEMENTS::
+--		- HTTPD:bind() - binds to {{Address}} and {{Port}}
+--		- HTTPD:unbind() - unbinds server
+--		
+--	OVERRIDES::
+--		- Class.new()
+--		- Server:run()
+--
 -------------------------------------------------------------------------------
 
 local db = require "tek.lib.debug"
 local _, lfs = pcall(require, "lfs")
 local Server = require "tek.class.server"
 local socket = require "socket"
-local WebRequest = require "tek.class.httprequest"
 local CGI = require "tek.class.cgi"
 local WTF = require "tek.class.wtf"
 pcall(require, "copas")
@@ -37,12 +83,9 @@ local tostring = tostring
 local type = type
 local unpack = unpack
 
--------------------------------------------------------------------------------
---	Module header
--------------------------------------------------------------------------------
+local HTTPD = Server.module("tek.class.httpd", "tek.class.server")
+HTTPD._VERSION = "httpd 2.0"
 
-local HTTPD = Server. module("tek.class.httpd", "tek.class.server")
-HTTPD._VERSION = "httpd 1.4"
 
 local function readonly(t)
 	return setmetatable(t, { __newindex = function() 
@@ -55,13 +98,24 @@ end
 -------------------------------------------------------------------------------
 
 function HTTPD.new(class, self)
-	
 	self = self or { }
-	
-	self.Address = self.Address or "127.0.0.1"
+	self.Address = self.Address or "localhost"
 	self.ClientTimeout = self.ClientTimeout or false -- 5
+	self.DefaultIndex = self.DefaultIndex or
+	{
+		"index.lhtml",
+		"index.lua",
+		"index.html"
+	}
+	self.DirList = self.DirList == nil and "l" or self.DirList -- "l" = list
 	self.DocumentRoot = self.DocumentRoot or "htdocs"
-	self.DoDirList = self.DoDirList == nil or self.DoDirList
+	self.ExtraWebEnvironment = self.ExtraWebEnvironment or { }
+	self.Handlers = self.Handlers or
+	{
+		["%.lua"] = { },
+		["%.lhtml"] = { },
+	}
+	self.Listen = self.Listen or false
 	self.MIMEFileExts = self.MIMEFileExts or
 	{ 
 		txt = "text/plain",
@@ -80,23 +134,12 @@ function HTTPD.new(class, self)
 		install = "text/plain",
 		license = "text/plain",
 	}
-	self.Handlers = self.Handlers or
-	{
-		["%.lua"] = { },
-		["%.lhtml"] = { },
-	}
-	self.DefaultIndex = self.DefaultIndex or
-	{
-		"index.lhtml",
-		"index.lua",
-		"index.html"
-	}
-	self.Listen = self.Listen or false
 	self.Port = self.Port or 8080
+	self.RequestArgs = self.RequestArgs or { }
+	self.RequestClassName = self.RequestClassName or "tek.class.httprequest"
 	self.RequestId = 0
 	self.ServerName = self.ServerName or "server-http"
 	self.ServerSocket = false
-	self.WebData = { State = { Server = self } }
 	self.WebEnvironment = self.WebEnvironment or
 	{ 
 		abs = math.abs,
@@ -110,13 +153,6 @@ function HTTPD.new(class, self)
 		insert = table.insert,
 -- 		loadstring = loadstring,
 		pairs = pairs,
-		print = function(...)
-			for i = 1, select('#', ...) do
-				stderr:write((i > 1 and "\t" or "") .. 
-					tostring(select(i, ...)))
-			end
-			stderr:write("\n") 
-		end,
 		remove = table.remove,
 		select = select,
 		sort = table.sort,
@@ -127,10 +163,18 @@ function HTTPD.new(class, self)
 		type = type,
 		unpack = unpack,
 	}
-	self.ExtraWebEnvironment = self.ExtraWebEnvironment or { }
+
+	-- request arguments:		
+	local reqargs = self.RequestArgs
+	reqargs.CookieName = reqargs.CookieName or "luawtf"
+	reqargs.RequestsGlobal = reqargs.RequestsGlobal or { }
+	reqargs.Sessions = reqargs.Sessions or { }
+		
+	-- mix in extra environment:
 	for key, val in pairs(self.ExtraWebEnvironment) do
 		self.WebEnvironment[key] = val
 	end
+	-- make web environment readonly:
 	self.WebEnvironment = readonly(self.WebEnvironment)
 	
 	if not self.DocumentRoot:match("^/") then
@@ -149,7 +193,7 @@ function HTTPD.new(class, self)
 end
 
 -------------------------------------------------------------------------------
---	success = HTTPD:bind()
+--	success = HTTPD:bind(): Bind server to {{Address}} and {{Port}}.
 -------------------------------------------------------------------------------
 
 function HTTPD:bind()
@@ -173,7 +217,7 @@ function HTTPD:bind()
 end
 
 -------------------------------------------------------------------------------
---	HTTPD:unbind()
+--	HTTPD:unbind(): Unbinds server, frees server socket.
 -------------------------------------------------------------------------------
 
 function HTTPD:unbind()
@@ -228,7 +272,7 @@ function HTTPD:doFileRequest(fd, req)
 	
 	local fname = self:docToRealPath(uri)
 	if lfs.attributes(fname, "mode") == "directory" then
-		if not self.DoDirList then
+		if not self.DirList then
 			self:logRequest(fd, req, "403")
 			return self:sendResult(fd, "Forbidden", "text/plain")
 		end
@@ -248,7 +292,7 @@ function HTTPD:doFileRequest(fd, req)
 			end
 		end
 		sort(c)
-		insert(c, 1, "Directory listing</br>\n")
+		insert(c, 1, "Directory listing<hr />\n")
 		insert(c, 1, "<html><body>")
 		insert(c, "</body></html>")
 	elseif lfs.attributes(fname, "mode") == "file" then
@@ -290,8 +334,7 @@ end
 function HTTPD:doHandler(fd, req, handler, hnd_name)
 	local orgreq = req
 	local httpd = self
-	local webenv = self.WebEnvironment
-	local webdata = self.WebData
+	local reqclass = require(self.RequestClassName)
 	local addr, port = fd:getpeername()
 	local reqid = self.RequestId
 	self.RequestId = self.RequestId + 1
@@ -300,24 +343,25 @@ function HTTPD:doHandler(fd, req, handler, hnd_name)
 			return fd:receive(nbytes)
 		end,
 		newRequest = function(self)
-			return WebRequest:new {
+			local reqinit = {
 				ResponseHeaders = "",
 				write = function(self, s)
 					local h = self.ResponseHeaders
-					if h then
-						h = h .. s
-						if h:match("\r\n\r\n") then
-							self.ResponseHeaders = false
-							local status = h:match("Status:%s*(.-)\r\n") or 
-								"200 OK"
--- 							stderr:write("HTTP/1.1 " .. status .. "\r\n")
--- 							stderr:write(h)
-							fd:send("HTTP/1.1 " .. status .. "\r\n")
-							return fd:send(h)
-						end
+					if not h then
+						-- stderr:write(s)
+						return fd:send(s)
 					end
--- 					stderr:write(s)
-					return fd:send(s)
+					h = h .. s
+					if h:match("\r\n\r\n") then
+						self.ResponseHeaders = false
+						local status = h:match("Status:%s*(.-)\r\n") or 
+							"200 OK"
+						-- stderr:write("HTTP/1.1 " .. status .. "\r\n")
+						-- stderr:write(h)
+						fd:send("HTTP/1.1 " .. status .. "\r\n")
+						return fd:send(h)
+					end
+					self.ResponseHeaders = h
 				end,
 				Environment = {
 					CONTENT_LENGTH = req.headers["Content-Length"],
@@ -343,22 +387,26 @@ function HTTPD:doHandler(fd, req, handler, hnd_name)
 					SCRIPT_FILENAME = req.scriptfilename,
 					SCRIPT_NAME = req.scriptname,
 				},
-				Database = webdata,
 				newSession = function(self, sessiondata, skey)
-					local skey = WebRequest.newSession(self, sessiondata, skey)
+					local skey = reqclass.newSession(self, sessiondata, skey)
 					db.warn("webrequest(%08x:%s) new session", reqid, skey)
 					return skey
 				end,
 			}
+			-- mix in request arguments:
+			for key, val in pairs(httpd.RequestArgs) do
+				reqinit[key] = val
+			end
+			return reqclass:new(reqinit)
 		end,
 		doRequest = function(self, req)
 			local t0 = socket.gettime()
 			db.info("webrequest(%08x) from %s:%s", reqid, addr, port)
-			WTF:new { Environment = webenv }:doRequest(req)
+			WTF:new { Environment = httpd.WebEnvironment }:doRequest(req)
 			httpd:logRequest(fd, orgreq, "200")
 			local t1 = socket.gettime()
 			db.info("webrequest(%08x:%s) complete, took %.3fs",
-				reqid, "<nosession>", t1 - t0)
+				reqid, req.SessionKey or "<nosession>", t1 - t0)
 		end
 	}:serve()
 	return true

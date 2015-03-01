@@ -170,7 +170,7 @@ function CGI:serve()
 			end
 			self:endPost(req, fifo)
 		end
-	end	
+	end
 end
 
 -------------------------------------------------------------------------------
@@ -226,7 +226,8 @@ function CGI:updatePost(req, s)
 			if buf then
 				if buf:len() > 0 then
 					if self.ArgFD then
-						self:updateUpload(req, self.ArgFilename, self.ArgFD, buf)
+						self:updateUpload(req, self.ArgFilename, self.ArgFD, 
+							buf)
 					else
 						self.ArgBuffer:write(buf)
 					end
@@ -267,7 +268,8 @@ function CGI:updatePost(req, s)
 							local filename = buf:match(';%s*filename="(.-)"')
 							if filename then
 								self.ArgFilename = filename
-								self.ArgFD = self:beginUpload(req, filename, name)
+								self.ArgFD = self:beginUpload(req, filename,
+									name)
 								assert(self.ArgFD)
 							else
 								self.ArgBuffer = FIFO:new()

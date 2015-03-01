@@ -105,7 +105,7 @@ PREFIX ?= /usr/local
 LUAVER ?= 5.1
 
 LUA_DIR = $(PREFIX)
-LUA_INCDIR = $(LUA_DIR)/include
+# LUA_INCDIR = $(LUA_DIR)/include
 LUA_DEFS = -I$(LUA_INCDIR)
 # other known paths - better comment out what is inappropriate:
 # LUA_DEFS += -I/usr/include/lua$(LUAVER)
