@@ -27,8 +27,8 @@
 --			Table to be mixed into default web environment
 --		- {{Handlers [ISG]}} (table)
 --			Table keyed by filename extensions that invoke a Lua handler.
---			The value is a table of optional arguments reserved for future
---			use and should be empty	for now. Default {{"%.lua"}}, {{"%.lhtml"}}
+--			The value is a table of additional arguments to the handler.
+--			Default {{"%.lua"}}, {{"%.lhtml"}}
 --		- {{Listen [IG]}} (string)
 --			Combined Host and port specification, e.g. {{localhost:8080}}
 --		- {{Port [IG]}} (number)
@@ -84,7 +84,7 @@ local type = type
 local unpack = unpack
 
 local HTTPD = Server.module("tek.class.httpd", "tek.class.server")
-HTTPD._VERSION = "httpd 2.0"
+HTTPD._VERSION = "httpd 2.1"
 
 
 local function readonly(t)
@@ -113,8 +113,9 @@ function HTTPD.new(class, self)
 	self.Handlers = self.Handlers or
 	{
 		["%.lua"] = { },
-		["%.lhtml"] = { },
+		["%.lhtml"] = { parseluahtml = true },
 	}
+	self.IncludePath = self.IncludePath or "htinclude"
 	self.Listen = self.Listen or false
 	self.MIMEFileExts = self.MIMEFileExts or
 	{ 
@@ -402,7 +403,11 @@ function HTTPD:doHandler(fd, req, handler, hnd_name)
 		doRequest = function(self, req)
 			local t0 = socket.gettime()
 			db.info("webrequest(%08x) from %s:%s", reqid, addr, port)
-			WTF:new { Environment = httpd.WebEnvironment }:doRequest(req)
+			WTF:new { 
+				Environment = httpd.WebEnvironment,
+				IncludePath = httpd.IncludePath,
+				ParseLuaHTML = handler.parseluahtml,
+			}:doRequest(req)
 			httpd:logRequest(fd, orgreq, "200")
 			local t1 = socket.gettime()
 			db.info("webrequest(%08x:%s) complete, took %.3fs",

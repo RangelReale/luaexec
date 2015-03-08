@@ -49,7 +49,7 @@ local unpack = unpack or table.unpack
 local xpcall = have_coxpcall and coxpcall.xpcall or xpcall
 
 local Server = Class. module("tek.class.server", "tek.class")
-Server._VERSION = "Server 2.4"
+Server._VERSION = "Server 2.5"
 
 if have_copas then
 	copas.autoclose = false
@@ -339,6 +339,7 @@ function Server:run()
 			self:collectGarbage()
 		end
 	end
+	self:shutdown()
 	db.info("server exit")
 	return self.Status
 end

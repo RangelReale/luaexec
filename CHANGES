@@ -5,7 +5,7 @@
  environment example, login example
  * HTTPD class: Added DoDirList attribute, added support for 403 Forbidden,
  added ExtraWebEnvironment, added default index including handler invocation,
- added logging
+ added logging, parseluahtml option to handler arguments
  * Debug: added NOTE level, better adaptability for e.g. syslog
 
 === 0.83: ===

@@ -39,7 +39,7 @@ local traceback = debug.traceback
 local type = type
 
 local WTF = Class. module("tek.class.wtf", "tek.class")
-WTF._VERSION = "WTF 3.0"
+WTF._VERSION = "WTF 3.1"
 
 -------------------------------------------------------------------------------
 --	encodeurl: encode string to url; optionally specify a string with a
@@ -70,8 +70,9 @@ function WTF.new(class, self)
 	self = self or { }
 	self.Buffered = self.Buffered or false
 	self.Environment = self.Environment or { }
-	self.CommonPath = self.CommonPath or ""
--- 	self.CommonPathOverlay = self.CommonPathOverlay or false
+	self.IncludePath = self.IncludePath or ""
+-- 	self.IncludePathOverlay = self.IncludePathOverlay or false
+	self.ParseLuaHTML = self.ParseLuaHTML or false
 	return Class.new(class, self)
 end
 
@@ -115,10 +116,10 @@ function WTF:createEnvironment(req)
 		dofile = function(fname, ...)
 			fname = fname:match("/?([^/]+)$")
 			local f
--- 			if self.CommonPathOverlay then
--- 				f = loadfile(self.CommonPathOverlay .. fname, "bt", envtab)
+-- 			if self.IncludePathOverlay then
+-- 				f = loadfile(self.IncludePathOverlay .. fname, "bt", envtab)
 -- 			end
-			f = f or loadfile(self.CommonPath .. fname, "bt", envtab)
+			f = f or loadfile(self.IncludePath .. "/" .. fname, "bt", envtab)
 			if f then
 				if setfenv then
 					setfenv(f, envtab)
@@ -204,7 +205,7 @@ function WTF:doRequest(req)
 				local env = self:createEnvironment(req)
 				f, message = loadfile(fullname, "bt", env)
 				local page_without_code
-				if not f then
+				if not f and self.ParseLuaHTML then
 					f, message = loadhtml(fh, "out", scriptfile, env)
 					page_without_code = f and not message
 				end

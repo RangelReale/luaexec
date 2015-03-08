@@ -37,7 +37,7 @@ addbuffer "Content-Type: text/html\r\n\r\n"
 		</p>
 		<hr />
 		<p>
-			<form action="/webserver/testcgi.lua" method="post" accept-charset="utf-8" enctype="multipart/form-data">
+			<form action="/webserver/testcgi.lhtml" method="post" accept-charset="utf-8" enctype="multipart/form-data">
 				<input type="file" name="file1" maxlength="10000000">
 				<br />
 				<input type="file" name="file2" maxlength="10000000">
