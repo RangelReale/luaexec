@@ -1,6 +1,8 @@
 
 == LuaExec Changelog ==
 
+=== 0.84: ===
+
  * Webserver: added sessions, cookies, request argument mixins, extra
  environment example, login example
  * HTTPD class: Added DoDirList attribute, added support for 403 Forbidden,

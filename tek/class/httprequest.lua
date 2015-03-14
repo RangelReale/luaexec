@@ -30,7 +30,7 @@
 --
 -------------------------------------------------------------------------------
 
--- local lfs = require "lfs"
+local lfs = require "lfs"
 local Class = require "tek.class"
 local assert = assert
 local char = string.char
@@ -45,7 +45,7 @@ local tonumber = tonumber
 local type = type
 
 local HTTPRequest = Class.module("tek.class.httprequest", "tek.class")
-HTTPRequest._VERSION = "HTTPRequest 3.0"
+HTTPRequest._VERSION = "HTTPRequest 3.1"
 
 
 local DEF_MAX_CONTENT_LENGTH = 1000000

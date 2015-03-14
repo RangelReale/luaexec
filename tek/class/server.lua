@@ -48,8 +48,8 @@ local type = type
 local unpack = unpack or table.unpack
 local xpcall = have_coxpcall and coxpcall.xpcall or xpcall
 
-local Server = Class. module("tek.class.server", "tek.class")
-Server._VERSION = "Server 2.5"
+local Server = Class.module("tek.class.server", "tek.class")
+Server._VERSION = "Server 2.6"
 
 if have_copas then
 	copas.autoclose = false
@@ -93,7 +93,7 @@ function Server:checkAbort()
 end
 
 -------------------------------------------------------------------------------
---	id = allocID()
+--	id = allocId()
 -------------------------------------------------------------------------------
 
 function Server:allocId()
@@ -152,7 +152,7 @@ function Server:expireIntervals()
 end
 
 -------------------------------------------------------------------------------
---	freeID(id)
+--	freeId(id)
 -------------------------------------------------------------------------------
 
 function Server:freeId(id)
@@ -281,11 +281,43 @@ function Server:removeInterval(id)
 end
 
 -------------------------------------------------------------------------------
+--	handleFDs(ready)
+-------------------------------------------------------------------------------
+
+if not have_copas then
+	
+function Server:handleFDs(ready)
+	local regfd = self.RegisteredFDs -- records, indexed by fd
+	local recvfd = self.RecvFDs -- fds, indexed numerically
+	for i = 1, #ready do
+		local fd = ready[i]
+		local rec = regfd[fd]
+		if rec then
+			if rec.type == "server" then
+				local clientfd, msg = fd:accept()
+				if clientfd then
+					if rec.recvfunc(rec.data, clientfd, rec.name, 
+							unpack(rec.args)) then
+						clientfd:close()
+					end
+				end
+			else
+				rec.recvfunc(rec.data, fd, rec.name, unpack(rec.args))
+				fd:close()
+			end
+		else
+			error("unknown fd : " .. tostring(fd))
+		end
+	end
+end
+
+end
+
+-------------------------------------------------------------------------------
 --	status = run(): Run server
 -------------------------------------------------------------------------------
 
 function Server:run()
-	
 	self.Status = "run"
 	db.info("server running")
 	if have_copas then
@@ -312,30 +344,7 @@ function Server:run()
 			local timeout = self:expireIntervals()
 			db.trace("timeout=%.02fs", timeout)
 			ready, msg = socket.select(recvt, sendt, timeout)
-			
-			local regfd = self.RegisteredFDs -- records, indexed by fd
-			local recvfd = self.RecvFDs -- fds, indexed numerically
-			for i = 1, #ready do
-				local fd = ready[i]
-				local rec = regfd[fd]
-				if rec then
-					if rec.type == "server" then
-						local clientfd, msg = fd:accept()
-						if clientfd then
-							if rec.recvfunc(rec.data, clientfd, rec.name, 
-									unpack(rec.args)) then
-								clientfd:close()
-							end
-						end
-					else
-						rec.recvfunc(rec.data, fd, rec.name, unpack(rec.args))
-						fd:close()
-					end
-				else
-					error("unknown fd : " .. tostring(fd))
-				end
-			end
-			
+			self:handleFDs(ready)
 			self:collectGarbage()
 		end
 	end
@@ -391,6 +400,5 @@ end
 
 function Server:shutdown()
 end
-
 
 return Server

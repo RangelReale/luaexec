@@ -39,7 +39,7 @@ local traceback = debug.traceback
 local type = type
 
 local WTF = Class. module("tek.class.wtf", "tek.class")
-WTF._VERSION = "WTF 3.1"
+WTF._VERSION = "WTF 3.2"
 
 -------------------------------------------------------------------------------
 --	encodeurl: encode string to url; optionally specify a string with a
@@ -147,19 +147,20 @@ function WTF:createEnvironment(req)
 				"\r\n\r\n") 
 		end,
 		setbuffered = function(onoff) Buffered = onoff end,
-		Request = {
-			getArgs = function() return req:getArgs() end,
-			getEnv = function(self, key) return req:getEnv(key) end,
-			getGlobal = function() return req:getGlobal() end,
-			getSession = function() return req:getSession() end,
-			newSession = function(self, sdata, skey) 
-				return req:newSession(sdata, skey) 
-			end,
-			createSessionCookie = function(self, expire)
-				return req:createSessionCookie(expire)
-			end,
-			deleteSession = function() return req:deleteSession() end,
-		}
+		Request = req,
+-- 		Request = {
+-- 			getArgs = function() return req:getArgs() end,
+-- 			getEnv = function(self, key) return req:getEnv(key) end,
+-- 			getGlobal = function() return req:getGlobal() end,
+-- 			getSession = function() return req:getSession() end,
+-- 			newSession = function(self, sdata, skey) 
+-- 				return req:newSession(sdata, skey) 
+-- 			end,
+-- 			createSessionCookie = function(self, expire)
+-- 				return req:createSessionCookie(expire)
+-- 			end,
+-- 			deleteSession = function() return req:deleteSession() end,
+-- 		}
 	}
 	return setmetatable(envtab, { 
 		__index = self.Environment,

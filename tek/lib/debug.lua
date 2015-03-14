@@ -61,7 +61,7 @@ local Debug = _M
 ]]
 
 local Debug = { }
-Debug._VERSION = "Debug 6.0"
+Debug._VERSION = "Debug 6.1"
 
 -- symbolic:
 
@@ -178,9 +178,10 @@ end
 function Debug.console()
 	Debug.wrout(10, 'Entering the debug console.\n')
 	Debug.wrout(10, 'To redirect the output, e.g.:\n')
-	Debug.wrout(10, '  tek.lib.debug.out = io.open("logfile", "w")\n')
+	Debug.wrout(10, '  db = require "tek.lib.debug"\n')
+	Debug.wrout(10, '  db.out = io.open("logfile", "w")\n')
 	Debug.wrout(10, 'To dump a table, e.g.:\n')
-	Debug.wrout(10, '  tek.lib.debug.dump(app)\n')
+	Debug.wrout(10, '  db.dump(app)\n')
 	Debug.wrout(10, 'Use "cont" to continue.\n')
 	debug.debug()
 end

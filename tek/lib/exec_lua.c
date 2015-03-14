@@ -93,7 +93,7 @@ static const struct TInitModule tek_lib_exec_initmodules[] =
 static int tek_lib_exec_base_gc(lua_State *L)
 {
 	struct LuaExecTask *lexec = luaL_checkudata(L, 1, TEK_LIB_EXEC_CLASSNAME);
-	struct TExecBase *TExecBase = lexec->exec;		
+	struct TExecBase *TExecBase = lexec->exec;
 	if (TExecBase)
 	{
 #if defined(ENABLE_TASKS)
