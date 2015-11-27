@@ -49,10 +49,9 @@ local unpack = unpack or table.unpack
 local xpcall = have_coxpcall and coxpcall.xpcall or xpcall
 
 local Server = Class.module("tek.class.server", "tek.class")
-Server._VERSION = "Server 2.6"
+Server._VERSION = "Server 2.7"
 
 if have_copas then
-	copas.autoclose = false
 	db.info("using copas")
 else
 	db.warn("not using copas")

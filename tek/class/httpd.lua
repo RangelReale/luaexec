@@ -61,6 +61,7 @@ local WTF = require "tek.class.wtf"
 pcall(require, "copas")
 
 local assert = assert
+local attributes = lfs.attributes
 local concat = table.concat
 local error = error
 local insert = table.insert
@@ -84,7 +85,7 @@ local type = type
 local unpack = unpack
 
 local HTTPD = Server.module("tek.class.httpd", "tek.class.server")
-HTTPD._VERSION = "httpd 2.1"
+HTTPD._VERSION = "httpd 2.2"
 
 
 local function readonly(t)
@@ -100,7 +101,7 @@ end
 function HTTPD.new(class, self)
 	self = self or { }
 	self.Address = self.Address or "localhost"
-	self.ClientTimeout = self.ClientTimeout or false -- 5
+	self.ClientTimeout = self.ClientTimeout or 5
 	self.DefaultIndex = self.DefaultIndex or
 	{
 		"index.lhtml",
@@ -127,6 +128,7 @@ function HTTPD.new(class, self)
 		js = "application/javascript",
 		css = "text/css",
 		png = "image/png",
+		gif = "image/gif",
 	}
 	self.MIMEFileNames = self.MIMEFileNames or
 	{ 
@@ -151,6 +153,7 @@ function HTTPD.new(class, self)
 			info = db.info, dump = db.dump },
 		error = error,
 		floor = math.floor,
+-- 		gettime = socket.gettime,
 		insert = table.insert,
 -- 		loadstring = loadstring,
 		pairs = pairs,
@@ -238,6 +241,21 @@ function HTTPD:getDocumentRoot()
 end
 
 -------------------------------------------------------------------------------
+--	sendResult(fd, code, msg, contenttype, content): Send result
+-------------------------------------------------------------------------------
+
+function HTTPD:sendResult(fd, code, msg, ctype, c)
+	fd:send("HTTP/1.1 " .. code .. " " .. msg .. "\r\n")
+	if ctype then
+		fd:send("Content-Type: " .. ctype .. "\r\n")
+	end
+	if c then
+		fd:send("Content-Length: " .. c:len() .. "\r\n\r\n")
+		fd:send(c)
+	end
+end
+
+-------------------------------------------------------------------------------
 --	docToRealPath
 -------------------------------------------------------------------------------
 
@@ -264,43 +282,59 @@ function HTTPD:getDirIterator(vpath)
 	end
 end
 
+function HTTPD:send403(fd, req)
+	self:sendResult(fd, 403, "Forbidden", "text/plain", "403: Forbidden")
+	self:logRequest(fd, req, "403")
+	return false -- break
+end
+
+function HTTPD:send404(fd, req)
+	self:sendResult(fd, 404, "Not found", "text/plain", "404: Not found")
+	self:logRequest(fd, req, "404")
+	return false -- break
+end
+
 function HTTPD:doFileRequest(fd, req)
 	local ctype = "text/html"
-	local c = { }
 	
 	local uri = req.uri:match("^([^?]*)%?(.*)$") or req.uri
 	uri = uri:match("^(.-)/?$") or uri
 	
 	local fname = self:docToRealPath(uri)
-	if lfs.attributes(fname, "mode") == "directory" then
+	local mode = attributes(fname, "mode")
+	if mode == "directory" then
 		if not self.DirList then
-			self:logRequest(fd, req, "403")
-			return self:sendResult(fd, "Forbidden", "text/plain")
+			return self:send403(fd, req)
 		end
 		local di = self:getDirIterator(uri)
-		if di then
-			for entry in di do
-				local fname = self:docToRealPath(uri .. "/" .. entry)
-				local linkpath = uri == "/" and entry or 
-					uri .. "/" .. entry
-				if lfs.attributes(fname, "mode") == "directory" then
-					insert(c, '<a href="' .. linkpath .. '">' .. entry .. 
-						'/</a><br />\n')
-				else
-					insert(c, '<a href="' .. linkpath .. '">' .. entry .. 
-						'</a><br />\n')
-				end
+		if not di then
+			return self:send403(fd, req)
+		end
+		local c = { }
+		for entry in di do
+			local fname = self:docToRealPath(uri .. "/" .. entry)
+			local linkpath = uri == "/" and entry or 
+				uri .. "/" .. entry
+			if attributes(fname, "mode") == "directory" then
+				insert(c, '<a href="' .. linkpath .. '">' .. entry .. 
+					'/</a><br />\n')
+			else
+				insert(c, '<a href="' .. linkpath .. '">' .. entry .. 
+					'</a><br />\n')
 			end
 		end
 		sort(c)
 		insert(c, 1, "Directory listing<hr />\n")
 		insert(c, 1, "<html><body>")
 		insert(c, "</body></html>")
-	elseif lfs.attributes(fname, "mode") == "file" then
-		local f = open(fname)
+		self:sendResult(fd, 200, "OK", ctype, concat(c))
+		self:logRequest(fd, req, "200")
+		return req.proto ~= "HTTP/1.0" -- continue if >= HTTP/1.1
+		
+	elseif mode == "file" then
+		local fsize = attributes(fname, "size")
+		local f = fsize and open(fname)
 		if f then
-			insert(c, f:read("*a"))
-			f:close()
 			ctype = "application/octet-stream"
 			local lfname = fname:lower()
 			if self.MIMEFileNames[lfname] then
@@ -313,19 +347,22 @@ function HTTPD:doFileRequest(fd, req)
 					end
 				end
 			end
+			self:sendResult(fd, 200, "OK", ctype)
+			fd:send("Content-Length: " .. fsize .. "\r\n\r\n")
+			while true do
+				local buf = f:read(16384)
+				if not buf then
+					break
+				end
+				fd:send(buf)
+			end
+			f:close()
+			self:logRequest(fd, req, "200")
+			return req.proto ~= "HTTP/1.0" -- continue if >= HTTP/1.1
 		end
+		return self:send403(fd, req)
 	end
-	c = concat(c)
-	self:logRequest(fd, req, "200")
-	return self:sendResult(fd, c, ctype)
-end
-
-function HTTPD:sendResult(fd, c, ctype)
-	fd:send("HTTP/1.1 200 OK\n")
-	fd:send("Content-Length: " .. c:len() .. "\n")
-	fd:send("Content-Type: "..ctype.."\n\n")
-	fd:send(c)
-	return true
+	return self:send404(fd, req)
 end
 
 -------------------------------------------------------------------------------
@@ -334,6 +371,7 @@ end
 
 function HTTPD:doHandler(fd, req, handler, hnd_name)
 	local orgreq = req
+	local chunked = req.proto ~= "HTTP/1.0"
 	local httpd = self
 	local reqclass = require(self.RequestClassName)
 	local addr, port = fd:getpeername()
@@ -344,25 +382,33 @@ function HTTPD:doHandler(fd, req, handler, hnd_name)
 			return fd:receive(nbytes)
 		end,
 		newRequest = function(self)
+			local h = chunked and "Transfer-encoding: chunked\r\n" or ""
 			local reqinit = {
-				ResponseHeaders = "",
 				write = function(self, s)
-					local h = self.ResponseHeaders
-					if not h then
-						-- stderr:write(s)
-						return fd:send(s)
+					if h then -- headers not yet sent
+						h = h .. s
+						local head, rest = h:match("^(.-)\r\n\r\n(.*)$")
+						if head then
+							local status = head:match("Status:%s*(.-)\r\n") or 
+								"200 OK"
+							if not fd:send("HTTP/1.1 " .. status .. "\r\n" .. 
+								head .. "\r\n\r\n") then
+								return false
+							end
+							h = false
+							s = rest
+						else
+							return true
+						end
 					end
-					h = h .. s
-					if h:match("\r\n\r\n") then
-						self.ResponseHeaders = false
-						local status = h:match("Status:%s*(.-)\r\n") or 
-							"200 OK"
-						-- stderr:write("HTTP/1.1 " .. status .. "\r\n")
-						-- stderr:write(h)
-						fd:send("HTTP/1.1 " .. status .. "\r\n")
-						return fd:send(h)
+					if chunked then
+						local len = s:len()
+						if len == 0 then
+							return true
+						end
+						return fd:send(("%x\r\n"):format(len) .. s .. "\r\n")
 					end
-					self.ResponseHeaders = h
+					return fd:send(s)
 				end,
 				Environment = {
 					CONTENT_LENGTH = req.headers["Content-Length"],
@@ -408,13 +454,16 @@ function HTTPD:doHandler(fd, req, handler, hnd_name)
 				IncludePath = httpd.IncludePath,
 				ParseLuaHTML = handler.parseluahtml,
 			}:doRequest(req)
+			if chunked then
+				fd:send("0\r\n\r\n")
+			end
 			httpd:logRequest(fd, orgreq, "200")
 			local t1 = socket.gettime()
 			db.info("webrequest(%08x:%s) complete, took %.3fs",
 				reqid, req.SessionKey or "<nosession>", t1 - t0)
 		end
 	}:serve()
-	return true
+	return chunked -- continue if transfer was chunked
 end
 
 -------------------------------------------------------------------------------
@@ -423,8 +472,8 @@ end
 
 function HTTPD:logRequest(fd, req, msg)
 	local addr, port = fd:getpeername()
-	db.warn("%s %s %s %s %s", req.headers.Host, req.method, req.uri, msg, addr,
-		req.headers.Referrer)
+	db.warn("%s %s %s %s %s %s %s", fd, req.headers.Host, req.method,
+		req.proto, req.uri, msg, addr, req.headers.Referrer)
 end
 
 -------------------------------------------------------------------------------
@@ -433,6 +482,13 @@ end
 -------------------------------------------------------------------------------
 
 function HTTPD:serveClient(fd)
+	while self:serveRequest(fd) and self.copas do
+		-- continue using connection (needs copas for asynchronoucy)
+	end
+	return true -- close
+end
+
+function HTTPD:serveRequest(fd)
 	
 	db.trace("serve client")
 	if self.ClientTimeout then
@@ -443,12 +499,12 @@ function HTTPD:serveClient(fd)
 	
 	local cmd, msg = fd:receive("*l")
 	if not cmd then
-		return false
+		return false -- break
 	end
 	
 	req.method, req.uri, req.proto = cmd:match("^(.+) (.+) (.+)$")
 	if not req.method then
-		return false
+		return false -- break
 	end
 	
 	while true do
@@ -459,7 +515,7 @@ function HTTPD:serveClient(fd)
 		local hkey, hval = line:match("^([%a-_]+)%s*%:%s*(.*)%s*$")
 		if not hkey then
 			db.warn("unrecognized header line")
-			return false
+			return false -- break
 		end
 -- 		db.warn("header: %s = %s", hkey, hval)
 		req.headers[hkey] = hval
@@ -486,7 +542,7 @@ function HTTPD:serveClient(fd)
 		end
 		fname = self:docToRealPath(fname or uri)
 		if fname then
-			fmode = lfs.attributes(fname, "mode")
+			fmode = attributes(fname, "mode")
 		end
 		if handler or fmode == "file" or trynum == 2 then
 			break
@@ -495,7 +551,7 @@ function HTTPD:serveClient(fd)
 		for i = 1, #self.DefaultIndex do
 			local idxname = self.DefaultIndex[i]
 			local fullname = fname .. "/" .. idxname
-			if lfs.attributes(fullname, "mode") == "file" then
+			if attributes(fullname, "mode") == "file" then
 				if uri:match("/$") then
 					uri = uri .. idxname
 				else
@@ -522,9 +578,7 @@ function HTTPD:serveClient(fd)
 		return self:doFileRequest(fd, req)
 	end
 	
-	self:logRequest(fd, req, "404")
-	self:sendResult(fd, "No such file or directory: " .. uri, "text/plain")
-	return true
+	return self:send404(fd, req)
 end
 
 -------------------------------------------------------------------------------
