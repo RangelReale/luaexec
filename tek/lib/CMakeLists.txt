@@ -1,0 +1,5 @@
+add_library ( exec SHARED exec_lua.c )
+if (LUA_CXX)
+   SET_SOURCE_FILES_PROPERTIES( exec_lua.c PROPERTIES LANGUAGE CXX )
+endif()
+TARGET_LINK_LIBRARIES ( exec hal execlib tekc tekdebug ${LUA_LIBRARIES} )
