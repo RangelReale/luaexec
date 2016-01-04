@@ -1240,6 +1240,16 @@ static const luaL_Reg tek_lib_exec_methods[] =
 	{ TNULL, TNULL }
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+TMODENTRY int luaopen_tek_lib_exec(lua_State *L);
+
+#ifdef __cplusplus
+}
+#endif
+
 
 TMODENTRY int luaopen_tek_lib_exec(lua_State *L)
 {

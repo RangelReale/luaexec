@@ -12,7 +12,15 @@
 #include <tek/mod/ioext.h>
 #include <tek/stdcall/exec.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern TMODENTRY TUINT
 tek_init_exec(struct TTask *, struct TModule *, TUINT16, TTAGITEM *);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _TEK_PROTO_EXEC_H */

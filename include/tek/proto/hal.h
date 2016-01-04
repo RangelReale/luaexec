@@ -11,7 +11,16 @@
 #include <tek/exec.h>
 #include <tek/stdcall/hal.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern TMODENTRY TUINT
 tek_init_hal(struct TTask *, struct TModule *, TUINT16, TTAGITEM *);
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif /* _TEK_PROTO_HAL_H */
