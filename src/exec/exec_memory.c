@@ -24,8 +24,8 @@ exec_destroymmu(struct THook *hook, TAPTR obj, TTAG msg)
 {
 	if (msg == TMSG_DESTROY)
 	{
-		struct TMemManager *mmu = obj;
-		struct TExecBase *TExecBase = TGetExecBase(mmu);
+		struct TMemManager *mmu = (struct TMemManager*)obj;
+		struct TExecBase *TExecBase = (struct TExecBase*)TGetExecBase(mmu);
 		TCALLHOOKPKT(&mmu->tmm_Hook, mmu, (TTAG) &msg_destroy);
 		TFree(mmu);
 	}
@@ -37,8 +37,8 @@ exec_destroymmu_and_allocator(struct THook *hook, TAPTR obj, TTAG msg)
 {
 	if (msg == TMSG_DESTROY)
 	{
-		struct TMemManager *mmu = obj;
-		struct TExecBase *TExecBase = TGetExecBase(mmu);
+		struct TMemManager *mmu = (struct TMemManager*)obj;
+		struct TExecBase *TExecBase = (struct TExecBase*)TGetExecBase(mmu);
 		TCALLHOOKPKT(&mmu->tmm_Hook, mmu, (TTAG) &msg_destroy);
 		TDESTROY(mmu->tmm_Allocator);
 		TFree(mmu);
@@ -51,7 +51,7 @@ exec_destroymmu_and_free(struct THook *hook, TAPTR obj, TTAG msg)
 {
 	if (msg == TMSG_DESTROY)
 	{
-		struct TMemManager *mmu = obj;
+		struct TMemManager *mmu = (struct TMemManager*)obj;
 		struct TExecBase *TExecBase = (TEXECBASE *) TGetExecBase(mmu);
 		TCALLHOOKPKT(&mmu->tmm_Hook, mmu, (TTAG) &msg_destroy);
 		TFree(mmu->tmm_Allocator);
@@ -64,7 +64,7 @@ EXPORT struct TMemManager *
 exec_CreateMemManager(struct TExecBase *TExecBase, TAPTR allocator,
 	TUINT mmutype, struct TTagItem *tags)
 {
-	struct TMemManager *mmu = TAlloc(TNULL, sizeof(struct TMemManager));
+	struct TMemManager *mmu = (struct TMemManager*)TAlloc(TNULL, sizeof(struct TMemManager));
 	if (mmu)
 	{
 		THOOKENTRY THOOKFUNC destructor = TNULL;
@@ -106,7 +106,7 @@ exec_CreateMemManager(struct TExecBase *TExecBase, TAPTR allocator,
 					TAPTR block = (TAPTR)
 						(((union TMemHead *) allocator) + 1);
 					blocksize -= sizeof(union TMemHead);
-					success = exec_initmemhead(allocator, block, blocksize,
+					success = exec_initmemhead((union TMemHead*)allocator, block, blocksize,
 						flags, 0);
 					if (!success)
 						TDBPRINTF(TDB_FAIL,("static allocator failed\n"));
@@ -278,7 +278,7 @@ exec_initmemhead(union TMemHead *mh, TAPTR mem, TSIZE size, TUINT flags,
 		--align;
 		size &= ~align;
 
-		mh->tmh_Node.tmh_Mem = mem;
+		mh->tmh_Node.tmh_Mem = (TINT8*)mem;
 		mh->tmh_Node.tmh_MemEnd = ((TINT8 *) mem) + size;
 		mh->tmh_Node.tmh_Free = size;
 		mh->tmh_Node.tmh_Align = align;
@@ -544,8 +544,8 @@ exec_destroypool(struct THook *hook, TAPTR obj, TTAG msg)
 {
 	if (msg == TMSG_DESTROY)
 	{
-		struct TMemPool *pool = obj;
-		struct TExecBase *TExecBase = TGetExecBase(pool);
+		struct TMemPool *pool = (struct TMemPool*)obj;
+		struct TExecBase *TExecBase = (struct TExecBase*)TGetExecBase(pool);
 		union TMemHead *node = (union TMemHead *) pool->tpl_List.tlh_Head.tln_Succ;
 		struct TNode *nnode;
 		if (pool->tpl_Flags & TMEMHF_FREE)
@@ -567,15 +567,15 @@ exec_CreatePool(struct TExecBase *TExecBase, struct TTagItem *tags)
 	TUINT fixedsize = TGetTag(tags, TPool_StaticSize, 0);
 	if (fixedsize)
 	{
-		struct TMemPool *pool = TAlloc(TNULL, sizeof(struct TMemPool));
+		struct TMemPool *pool = (struct TMemPool*)TAlloc(TNULL, sizeof(struct TMemPool));
 		if (pool)
 		{
-			union TMemHead *fixed = (TAPTR) TGetTag(tags, TPool_Static, TNULL);
+			union TMemHead *fixed = (union TMemHead*) TGetTag(tags, TPool_Static, TNULL);
 			pool->tpl_Flags = TMEMHF_FIXED;
 			if (fixed == TNULL)
 			{
 				TAPTR mmu = (TAPTR) TGetTag(tags, TPool_MemManager, TNULL);
-				fixed = TAlloc(mmu, fixedsize);
+				fixed = (union TMemHead*)TAlloc((struct TMemManager*)mmu, fixedsize);
 				pool->tpl_Flags |= TMEMHF_FREE;
 			}
 
@@ -609,7 +609,7 @@ exec_CreatePool(struct TExecBase *TExecBase, struct TTagItem *tags)
 		TUINT thressize = (TUINT) TGetTag(tags, TPool_ThresSize, (TTAG) 256);
 		if (pudsize >= thressize)
 		{
-			struct TMemPool *pool = TAlloc(TNULL, sizeof(struct TMemPool));
+			struct TMemPool *pool = (struct TMemPool*)TAlloc(TNULL, sizeof(struct TMemPool));
 			if (pool)
 			{
 				pool->tpl_Align = sizeof(union TMemNode) - 1;
@@ -696,7 +696,7 @@ EXPORT TAPTR exec_AllocPool(struct TExecBase *TExecBase, struct TMemPool *pool,
 			}
 
 			pudsize = (pool->tpl_PudSize + pool->tpl_Align) & ~pool->tpl_Align;
-			node = TAlloc(pool->tpl_MemManager, sizeof(union TMemHead) + pudsize);
+			node = (union TMemHead*)TAlloc((struct TMemManager*)pool->tpl_MemManager, sizeof(union TMemHead) + pudsize);
 			if (node)
 			{
 				exec_initmemhead(node, node + 1, pudsize, pool->tpl_Flags,
@@ -710,7 +710,7 @@ EXPORT TAPTR exec_AllocPool(struct TExecBase *TExecBase, struct TMemPool *pool,
 			/* large allocation */
 
 			size = (size + pool->tpl_Align) & ~pool->tpl_Align;
-			node = TAlloc(pool->tpl_MemManager, sizeof(union TMemHead) + size);
+			node = (union TMemHead*)TAlloc((struct TMemManager*)pool->tpl_MemManager, sizeof(union TMemHead) + size);
 			if (node)
 			{
 				exec_initmemhead(node, node + 1, size,
@@ -869,7 +869,7 @@ static TAPTR exec_mmu_msgalloc(struct TMemManager *mmu, TSIZE size)
 	TAPTR hal = TExecBase->texb_HALBase;
 	TINT8 *mem;
 	THALLock(hal, &TExecBase->texb_Lock);
-	mem = THALAlloc(hal, size +
+	mem = (TINT8*)THALAlloc(hal, size +
 		sizeof(struct TNode) + sizeof(struct TMessage));
 	if (mem)
 	{
@@ -917,7 +917,7 @@ static void exec_mmu_msgdestroy(struct TMemManager *mmu)
 
 static THOOKENTRY TTAG exec_mmu_msg(struct THook *hook, TAPTR obj, TTAG m)
 {
-	struct TMemManager *mmu = obj;
+	struct TMemManager *mmu = (struct TMemManager*)obj;
 	union TMemMsg *msg = (union TMemMsg *) m;
 	switch (msg->tmmsg_Type)
 	{
@@ -929,7 +929,7 @@ static THOOKENTRY TTAG exec_mmu_msg(struct THook *hook, TAPTR obj, TTAG m)
 				msg->tmmsg_Alloc.tmmsg_Size);
 		case TMMSG_FREE:
 			exec_mmu_msgfree(mmu,
-				msg->tmmsg_Free.tmmsg_Ptr,
+				(TINT8*)msg->tmmsg_Free.tmmsg_Ptr,
 				msg->tmmsg_Free.tmmsg_Size);
 			break;
 		case TMMSG_REALLOC:
@@ -1605,7 +1605,7 @@ static TAPTR exec_mmu_kernelrealloc(struct TMemManager *mmu, TINT8 *oldmem,
 
 static THOOKENTRY TTAG exec_mmu_kernel(struct THook *hook, TAPTR obj, TTAG m)
 {
-	struct TMemManager *mmu = obj;
+	struct TMemManager *mmu = (struct TMemManager*)obj;
 	union TMemMsg *msg = (union TMemMsg *) m;
 	switch (msg->tmmsg_Type)
 	{
@@ -1616,12 +1616,12 @@ static THOOKENTRY TTAG exec_mmu_kernel(struct THook *hook, TAPTR obj, TTAG m)
 				msg->tmmsg_Alloc.tmmsg_Size);
 		case TMMSG_FREE:
 			exec_mmu_kernelfree(mmu,
-				msg->tmmsg_Free.tmmsg_Ptr,
+				(TINT8*)msg->tmmsg_Free.tmmsg_Ptr,
 				msg->tmmsg_Free.tmmsg_Size);
 			break;
 		case TMMSG_REALLOC:
 			return (TTAG) exec_mmu_kernelrealloc(mmu,
-				msg->tmmsg_Realloc.tmmsg_Ptr,
+				(TINT8*)msg->tmmsg_Realloc.tmmsg_Ptr,
 				msg->tmmsg_Realloc.tmmsg_OSize,
 				msg->tmmsg_Realloc.tmmsg_NSize);
 		default:
@@ -1662,7 +1662,7 @@ static THOOKENTRY TTAG exec_mmudestroyfunc(struct THook *hook, TAPTR obj,
 {
 	if (msg == TMSG_DESTROY)
 	{
-		struct TMemManager *mmu = obj;
+		struct TMemManager *mmu = (struct TMemManager*)obj;
 		TCALLHOOKPKT(&mmu->tmm_Hook, mmu, (TTAG) &msg_destroy);
 	}
 	return 0;

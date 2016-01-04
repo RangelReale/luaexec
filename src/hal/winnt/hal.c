@@ -51,7 +51,7 @@ LOCAL TBOOL
 hal_init(struct THALBase *hal, TTAGITEM *tags)
 {
 	struct HALSpecific *specific;
-	specific = malloc(sizeof(struct HALSpecific));
+	specific = (struct HALSpecific*)malloc(sizeof(struct HALSpecific));
 	if (specific)
 	{
 		memset(specific, 0, sizeof(struct HALSpecific));
@@ -110,7 +110,7 @@ hal_init(struct THALBase *hal, TTAGITEM *tags)
 LOCAL void
 hal_exit(struct THALBase *hal)
 {
-	struct HALSpecific *specific = hal->hmb_Specific;
+	struct HALSpecific *specific = (struct HALSpecific*)hal->hmb_Specific;
 	DeleteCriticalSection(&specific->hsp_DevLock);
 	TlsFree(specific->hsp_TLSIndex);
 	free(specific);
@@ -214,14 +214,14 @@ static unsigned _stdcall
 hal_win32thread_entry(void *t)
 {
 	struct HALThread *wth = (struct HALThread *) t;
-	struct THALBase *hal = wth->hth_HALBase;
-	struct HALSpecific *hws = hal->hmb_Specific;
+	struct THALBase *hal = (struct THALBase*)wth->hth_HALBase;
+	struct HALSpecific *hws = (struct HALSpecific*)hal->hmb_Specific;
 
 	TlsSetValue(hws->hsp_TLSIndex, t);
 
 	hal_wait(hal, TTASK_SIG_SINGLE);
 
-	(*wth->hth_Function)(wth->hth_Data);
+	(*wth->hth_Function)((struct TTask*)wth->hth_Data);
 
 	_endthreadex(0);
 	return 0;
@@ -248,12 +248,12 @@ hal_initthread(struct THALBase *hal, struct THALObject *thread,
 			if (function)
 			{
 				wth->hth_Thread = (TAPTR) _beginthreadex(NULL, 0,
-					hal_win32thread_entry, wth, 0, (HANDLE) &wth->hth_ThreadID);
+					hal_win32thread_entry, wth, 0, (unsigned int*) &wth->hth_ThreadID);
 				if (wth->hth_Thread) return TTRUE;
 			}
 			else
 			{
-				struct HALSpecific *hws = hal->hmb_Specific;
+				struct HALSpecific *hws = (struct HALSpecific*)hal->hmb_Specific;
 				TlsSetValue(hws->hsp_TLSIndex, wth);
 				return TTRUE;
 			}
@@ -287,8 +287,8 @@ hal_destroythread(struct THALBase *hal, struct THALObject *thread)
 EXPORT TAPTR
 hal_findself(struct THALBase *hal)
 {
-	struct HALSpecific *hws = hal->hmb_Specific;
-	struct HALThread *wth = TlsGetValue(hws->hsp_TLSIndex);
+	struct HALSpecific *hws = (struct HALSpecific*)hal->hmb_Specific;
+	struct HALThread *wth = (struct HALThread*)TlsGetValue(hws->hsp_TLSIndex);
 	return wth->hth_Data;
 }
 
@@ -320,8 +320,8 @@ hal_signal(struct THALBase *hal, struct THALObject *thread, TUINT signals)
 EXPORT TUINT
 hal_setsignal(struct THALBase *hal, TUINT newsig, TUINT sigmask)
 {
-	struct HALSpecific *hws = hal->hmb_Specific;
-	struct HALThread *wth = TlsGetValue(hws->hsp_TLSIndex);
+	struct HALSpecific *hws = (struct HALSpecific*)hal->hmb_Specific;
+	struct HALThread *wth = (struct HALThread*)TlsGetValue(hws->hsp_TLSIndex);
 #ifndef HAL_USE_ATOMICS 
 	TUINT oldsig;
 	EnterCriticalSection(&wth->hth_SigLock);
@@ -343,8 +343,8 @@ hal_setsignal(struct THALBase *hal, TUINT newsig, TUINT sigmask)
 EXPORT TUINT
 hal_wait(struct THALBase *hal, TUINT sigmask)
 {
-	struct HALSpecific *hws = hal->hmb_Specific;
-	struct HALThread *wth = TlsGetValue(hws->hsp_TLSIndex);
+	struct HALSpecific *hws = (struct HALSpecific*)hal->hmb_Specific;
+	struct HALThread *wth = (struct HALThread*)TlsGetValue(hws->hsp_TLSIndex);
 	TUINT sig;
 	for (;;)
 	{
@@ -368,8 +368,8 @@ static TUINT
 hal_timedwaitevent(struct THALBase *hal, struct HALThread *t,
 	TTIME *tektime, TUINT sigmask)
 {
-	struct HALSpecific *hws = hal->hmb_Specific;
-	struct HALThread *wth = TlsGetValue(hws->hsp_TLSIndex);
+	struct HALSpecific *hws = (struct HALSpecific*)hal->hmb_Specific;
+	struct HALThread *wth = (struct HALThread*)TlsGetValue(hws->hsp_TLSIndex);
 
 	TTIME waitt, curt;
 	TUINT millis;
@@ -416,7 +416,7 @@ hal_timedwaitevent(struct THALBase *hal, struct HALThread *t,
 static void
 hal_getsystime(struct THALBase *hal, TTIME *time)
 {
-	struct HALSpecific *hws = hal->hmb_Specific;
+	struct HALSpecific *hws = (struct HALSpecific*)hal->hmb_Specific;
 	if (hws->hsp_UsePerfCounter)
 	{
 		LONGLONG perft;
@@ -502,7 +502,7 @@ getmodpathname(TSTRPTR path, TSTRPTR extra, TSTRPTR modname)
 	TSTRPTR modpath;
 	TINT l = strlen(path) + strlen(modname) + 5;	/* + .dll + \0 */
 	if (extra) l += strlen(extra);
-	modpath = malloc(l);
+	modpath = (TSTRPTR)malloc(l);
 	if (modpath)
 	{
 		strcpy(modpath, path);
@@ -516,7 +516,7 @@ getmodpathname(TSTRPTR path, TSTRPTR extra, TSTRPTR modname)
 static TSTRPTR getmodpath(TSTRPTR path, TSTRPTR name)
 {
 	TINT l = strlen(path);
-	TSTRPTR p = malloc(l + strlen(name) + 1);
+	TSTRPTR p = (TSTRPTR)malloc(l + strlen(name) + 1);
 	if (p)
 	{
 		strcpy(p, path);
@@ -528,7 +528,7 @@ static TSTRPTR getmodpath(TSTRPTR path, TSTRPTR name)
 static TSTRPTR getmodsymbol(TSTRPTR modname)
 {
 	TINT l = strlen(modname) + 11;
-	TSTRPTR sym = malloc(l);
+	TSTRPTR sym = (TSTRPTR)malloc(l);
 	if (sym)
 	{
 		strcpy(sym, "_tek_init_");
@@ -580,11 +580,11 @@ EXPORT TAPTR
 hal_loadmodule(struct THALBase *hal, TSTRPTR name, TUINT16 version,
 	TUINT *psize, TUINT *nsize)
 {
-	struct HALModule *mod = hal_alloc(hal, sizeof(struct HALModule));
+	struct HALModule *mod = (struct HALModule*)hal_alloc(hal, sizeof(struct HALModule));
 	if (mod)
 	{
 		TSTRPTR modpath;
-		struct HALSpecific *hws = hal->hmb_Specific;
+		struct HALSpecific *hws = (struct HALSpecific*)hal->hmb_Specific;
 
 		mod->hmd_Lib = TNULL;
 		mod->hmd_InitFunc = TNULL;
@@ -618,11 +618,11 @@ hal_loadmodule(struct THALBase *hal, TSTRPTR name, TUINT16 version,
 			{
 				TDBPRINTF(2,("resolving %s\n", modsym));
 				mod->hmd_InitFunc =
-					(TAPTR) GetProcAddress(mod->hmd_Lib, modsym + 1);
+					(TMODINITFUNC) GetProcAddress(mod->hmd_Lib, modsym + 1);
 				if (!mod->hmd_InitFunc)
 				{
 					mod->hmd_InitFunc =
-						(TAPTR) GetProcAddress(mod->hmd_Lib, modsym);
+						(TMODINITFUNC) GetProcAddress(mod->hmd_Lib, modsym);
 				}
 				free(modsym);
 			}
@@ -648,14 +648,14 @@ hal_loadmodule(struct THALBase *hal, TSTRPTR name, TUINT16 version,
 EXPORT TBOOL
 hal_callmodule(struct THALBase *hal, TAPTR halmod, struct TTask *task, TAPTR mod)
 {
-	struct HALModule *hwm = halmod;
-	return (TBOOL) (*hwm->hmd_InitFunc)(task, mod, hwm->hmd_Version, TNULL);
+	struct HALModule *hwm = (struct HALModule*)halmod;
+	return (TBOOL) (*hwm->hmd_InitFunc)(task, (struct TModule*)mod, hwm->hmd_Version, TNULL);
 }
 
 EXPORT void
 hal_unloadmodule(struct THALBase *hal, TAPTR halmod)
 {
-	struct HALModule *hwm = halmod;
+	struct HALModule *hwm = (struct HALModule*)halmod;
 	FreeLibrary(hwm->hmd_Lib);
 	TDBPRINTF(2,("module unloaded\n"));
 	free(halmod);
@@ -665,7 +665,7 @@ EXPORT TBOOL
 hal_scanmodules(struct THALBase *hal, TSTRPTR path, struct THook *hook)
 {
 	TSTRPTR p;
-	struct HALSpecific *hws = hal->hmb_Specific;
+	struct HALSpecific *hws = (struct HALSpecific*)hal->hmb_Specific;
 	TBOOL success = TFALSE;
 
 	p = getmodpath(hws->hsp_ProgDir, "mod\\*.dll");
@@ -846,8 +846,8 @@ static void TTASKENTRY hal_devfunc(struct TTask *task)
 {
 	TAPTR exec = TGetExecBase(task);
 	struct THALBase *hal = TExecGetHALBase(exec);
-	struct HALSpecific *hps = hal->hmb_Specific;
-	struct HALThread *thread = TlsGetValue(hps->hsp_TLSIndex);
+	struct HALSpecific *hps = (struct HALSpecific*)hal->hmb_Specific;
+	struct HALThread *thread = (struct HALThread*)TlsGetValue(hps->hsp_TLSIndex);
 	TAPTR port = TExecGetUserPort(exec, task);
 	struct TTimeRequest *msg;
 	TUINT sig = 0;
@@ -867,7 +867,7 @@ static void TTASKENTRY hal_devfunc(struct TTask *task)
 		EnterCriticalSection(&hps->hsp_DevLock);
 		hal_getsystime(hal, &curtime);
 
-		while ((msg = TExecGetMsg(exec, port)))
+		while ((msg = (struct TTimeRequest*)TExecGetMsg(exec, (struct TMsgPort*)port)))
 		{
 			TAddTime(&msg->ttr_Data.ttr_Time, &curtime);
 			TAddTail(&hps->hsp_ReqList, (struct TNode *) msg);
@@ -899,12 +899,12 @@ static void TTASKENTRY hal_devfunc(struct TTask *task)
 LOCAL TCALLBACK struct TTimeRequest *
 hal_open(struct THALBase *hal, struct TTask *task, TTAGITEM *tags)
 {
-	struct HALSpecific *hws = hal->hmb_Specific;
+	struct HALSpecific *hws = (struct HALSpecific*)hal->hmb_Specific;
 	TAPTR exec = (TAPTR) TGetTag(tags, THalBase_Exec, TNULL);
 	struct TTimeRequest *req;
 	hws->hsp_ExecBase = exec;
 
-	req = TExecAllocMsg0(exec, sizeof(struct TTimeRequest));
+	req = (struct TTimeRequest*)TExecAllocMsg0(exec, sizeof(struct TTimeRequest));
 	if (req)
 	{
 		EnterCriticalSection(&hws->hsp_DevLock);
@@ -939,7 +939,7 @@ hal_open(struct THALBase *hal, struct TTask *task, TTAGITEM *tags)
 LOCAL TCALLBACK void
 hal_close(struct THALBase *hal, struct TTask *task)
 {
-	struct HALSpecific *hws = hal->hmb_Specific;
+	struct HALSpecific *hws = (struct HALSpecific*)hal->hmb_Specific;
 
 	EnterCriticalSection(&hws->hsp_DevLock);
 
@@ -948,9 +948,9 @@ hal_close(struct THALBase *hal, struct TTask *task)
 		if (--hws->hsp_RefCount == 0)
 		{
 			TDBPRINTF(2,("hal.device refcount dropped to 0\n"));
-			TExecSignal(hws->hsp_ExecBase, hws->hsp_DevTask, TTASK_SIG_ABORT);
+			TExecSignal(hws->hsp_ExecBase, (struct TTask*)hws->hsp_DevTask, TTASK_SIG_ABORT);
 			TDBPRINTF(2,("destroy hal.device task...\n"));
-			TDestroy(hws->hsp_DevTask);
+			TDestroy((struct THandle*)hws->hsp_DevTask);
 			hws->hsp_DevTask = TNULL;
 		}
 	}
@@ -965,7 +965,7 @@ hal_close(struct THALBase *hal, struct TTask *task)
 EXPORT void
 hal_beginio(struct THALBase *hal, struct TTimeRequest *req)
 {
-	struct HALSpecific *hws = hal->hmb_Specific;
+	struct HALSpecific *hws = (struct HALSpecific*)hal->hmb_Specific;
 	TAPTR exec = hws->hsp_ExecBase;
 	TTIME curtime;
 	TINT64 x = 0;
@@ -1003,7 +1003,7 @@ hal_beginio(struct THALBase *hal, struct TTimeRequest *req)
 			TAddTail(&hws->hsp_ReqList, (struct TNode *) req);
 			LeaveCriticalSection(&hws->hsp_DevLock);
 			#else
-			TExecPutMsg(exec, TExecGetUserPort(exec, hws->hsp_DevTask),
+			TExecPutMsg(exec, TExecGetUserPort(exec, (struct TTask*)hws->hsp_DevTask),
 				req->ttr_Req.io_ReplyPort, req);
 			#endif
 			return;
@@ -1046,7 +1046,7 @@ hal_beginio(struct THALBase *hal, struct TTimeRequest *req)
 EXPORT TINT
 hal_abortio(struct THALBase *hal, struct TTimeRequest *req)
 {
-	struct HALSpecific *hws = hal->hmb_Specific;
+	struct HALSpecific *hws = (struct HALSpecific*)hal->hmb_Specific;
 	TAPTR exec = hws->hsp_ExecBase;
 	TUINT status;
 
@@ -1073,14 +1073,14 @@ hal_abortio(struct THALBase *hal, struct TTimeRequest *req)
 		if (status & TMSGF_QUEUED)
 		{
 			/* remove from ioport */
-			TAPTR ioport = TExecGetUserPort(exec, hws->hsp_DevTask);
-			TExecRemoveMsg(exec, ioport, req);
+			TAPTR ioport = TExecGetUserPort(exec, (struct TTask*)hws->hsp_DevTask);
+			TExecRemoveMsg(exec, (struct TMsgPort*)ioport, req);
 		}
 		else
 		{
 			/* remove from reqlist */
 			TRemove((struct TNode *) req);
-			TExecSignal(exec, hws->hsp_DevTask, TTASK_SIG_USER);
+			TExecSignal(exec, (struct TTask*)hws->hsp_DevTask, TTASK_SIG_USER);
 		}
 	}
 	else

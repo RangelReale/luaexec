@@ -202,7 +202,7 @@ TLIBAPI void TDestroyList(struct TList *list)
 TLIBAPI struct TModule *TNewInstance(struct TModule *mod, TSIZE possize,
 	TSIZE negsize)
 {
-	struct TExecBase *TExecBase = TGetExecBase(mod);
+	struct TExecBase *TExecBase = (struct TExecBase*)TGetExecBase(mod);
 	TAPTR inst = TAlloc(TNULL, possize + negsize);
 	if (inst)
 	{
@@ -214,9 +214,9 @@ TLIBAPI struct TModule *TNewInstance(struct TModule *mod, TSIZE possize,
 		TCopyMem(mod, inst, size);
 		((struct TModule *) inst)->tmd_PosSize = possize;
 		((struct TModule *) inst)->tmd_NegSize = negsize;
-		((struct TModule *) inst)->tmd_InitTask = TFindTask(TNULL);
+		((struct TModule *) inst)->tmd_InitTask = (struct TTask*)TFindTask(TNULL);
 	}
-	return inst;
+	return (struct TModule*)inst;
 }
 
 /*****************************************************************************/
@@ -229,7 +229,7 @@ TLIBAPI void TFreeInstance(struct TModule *mod)
 {
 	if (mod)
 	{
-		struct TExecBase *TExecBase = TGetExecBase(mod);
+		struct TExecBase *TExecBase = (struct TExecBase*)TGetExecBase(mod);
 		TFree((TINT8 *) mod - ((struct TModule *) mod)->tmd_NegSize);
 	}
 }
@@ -542,7 +542,7 @@ static THOOKENTRY TTAG teklib_destroyiface(struct THook *h, TAPTR obj,
 {
 	if (msg == TMSG_DESTROY)
 	{
-		struct TInterface *iface = obj;
+		struct TInterface *iface = (struct TInterface*)obj;
 		struct TModule *mod = iface->tif_Module;
 		if (mod->tmd_Flags & TMODF_QUERYIFACE)
 			TCALLHOOKPKT(&mod->tmd_Handle.thn_Hook, iface, TMSG_DROPIFACE);
@@ -553,7 +553,7 @@ static THOOKENTRY TTAG teklib_destroyiface(struct THook *h, TAPTR obj,
 TLIBAPI void TInitInterface(struct TInterface *iface, struct TModule *mod,
 	TSTRPTR name, TUINT16 version)
 {
-	struct TExecBase *TExecBase = TGetExecBase(mod);
+	struct TExecBase *TExecBase = (struct TExecBase*)TGetExecBase(mod);
 	TInitHook(&iface->tif_Handle.thn_Hook, teklib_destroyiface, TNULL);
 	iface->tif_Handle.thn_Owner = TExecBase;
 	iface->tif_Handle.thn_Name = name;

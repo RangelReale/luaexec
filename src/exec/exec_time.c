@@ -45,8 +45,8 @@ exec_GetSystemTime(struct TExecBase *TExecBase, TTIME *timep)
 {
 	if (timep)
 	{
-		struct TTask *task = TFindTask(TNULL);
-		struct TTimeRequest *tr = task->tsk_TimeReq;
+		struct TTask *task = (struct TTask*)TFindTask(TNULL);
+		struct TTimeRequest *tr = (struct TTimeRequest*)task->tsk_TimeReq;
 		tr->ttr_Req.io_ReplyPort = &task->tsk_SyncPort;
 		tr->ttr_Req.io_Command = TTREQ_GETSYSTEMTIME;
 		TDoIO((struct TIORequest *) tr);
@@ -71,8 +71,8 @@ execi_getdate(struct TExecBase *TExecBase, TDATE *dtp, TUINT command)
 	TINT err = -1;
 	if (dtp)
 	{
-		struct TTask *task = TFindTask(TNULL);
-		struct TTimeRequest *tr = task->tsk_TimeReq;
+		struct TTask *task = (struct TTask*)TFindTask(TNULL);
+		struct TTimeRequest *tr = (struct TTimeRequest*)task->tsk_TimeReq;
 		tr->ttr_Req.io_ReplyPort = &task->tsk_SyncPort;
 		tr->ttr_Req.io_Command = command;
 		tr->ttr_Req.io_Error = 0;
@@ -119,8 +119,8 @@ exec_WaitTime(struct TExecBase *TExecBase, TTIME *timeout, TUINT sigmask)
 		}
 		else
 		{
-			struct TTask *task = TFindTask(TNULL);
-			struct TTimeRequest *tr = task->tsk_TimeReq;
+			struct TTask *task = (struct TTask*)TFindTask(TNULL);
+			struct TTimeRequest *tr = (struct TTimeRequest*)task->tsk_TimeReq;
 			struct TMsgPort *saverp = tr->ttr_Req.io_ReplyPort;
 
 			tr->ttr_Req.io_ReplyPort = TGetSyncPort(TNULL);
@@ -160,8 +160,8 @@ exec_WaitDate(struct TExecBase *TExecBase, TDATE *date, TUINT sigmask)
 
 	if (date)
 	{
-		struct TTask *task = TFindTask(TNULL);
-		struct TTimeRequest *tr = task->tsk_TimeReq;
+		struct TTask *task = (struct TTask*)TFindTask(TNULL);
+		struct TTimeRequest *tr = (struct TTimeRequest*)task->tsk_TimeReq;
 		struct TMsgPort *saverp = tr->ttr_Req.io_ReplyPort;
 
 		tr->ttr_Req.io_ReplyPort = TGetSyncPort(TNULL);

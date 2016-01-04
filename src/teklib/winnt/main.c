@@ -59,16 +59,16 @@ main(int argc, char **argv)
 			TATOMF_CREATE | TATOMF_NAME);
 		if (atom)
 		{
-			TExecSetAtomData(exec, atom, (TTAG) GetConsoleHwnd());
-			TExecUnlockAtom(exec, atom, TATOMF_KEEP);
+			TExecSetAtomData(exec, (struct TAtom*)atom, (TTAG) GetConsoleHwnd());
+			TExecUnlockAtom(exec, (struct TAtom*)atom, TATOMF_KEEP);
 		}
 
 		retval = EXIT_SUCCESS;
-		TEKMain(apptask);
+		TEKMain((struct TTask*)apptask);
 
 		TExecLockAtom(exec, "win32.hwnd", TATOMF_NAME | TATOMF_DESTROY);
 
-		TDestroy(apptask);
+		TDestroy((struct THandle*)apptask);
 	}
 
 	return retval;

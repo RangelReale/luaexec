@@ -23,8 +23,8 @@ static THOOKENTRY TTAG exec_systaskdestroy(struct THook *hook, TAPTR obj,
 {
 	if (msg == TMSG_DESTROY)
 	{
-		struct TTask *task = obj;
-		struct TExecBase *TExecBase = TGetExecBase(task);
+		struct TTask *task = (struct TTask*)obj;
+		struct TExecBase *TExecBase = (struct TExecBase*)TGetExecBase(task);
 		struct THALBase *THALBase = TExecBase->texb_HALBase;
 		THALDestroyThread(THALBase, &task->tsk_Thread);
 		THALLock(THALBase, &TExecBase->texb_Lock);
@@ -84,7 +84,7 @@ EXPORT struct TTask *exec_CreateSysTask(struct TExecBase *TExecBase,
 	}
 
 	/* tasks are messages */
-	newtask = TAlloc(&TExecBase->texb_MsgMemManager, sizeof(struct TTask) + tnlen);
+	newtask = (struct TTask*)TAlloc(&TExecBase->texb_MsgMemManager, sizeof(struct TTask) + tnlen);
 	if (newtask)
 	{
 		TFillMem(newtask, sizeof(struct TTask), 0);
@@ -173,7 +173,7 @@ EXPORT TBOOL exec_StrEqual(struct TExecBase *TExecBase, TSTRPTR s1, TSTRPTR s2)
 
 EXPORT TUINT exec_AllocSignal(struct TExecBase *TExecBase, TUINT signals)
 {
-	struct TTask *task = THALFindSelf(TExecBase->texb_HALBase);
+	struct TTask *task = (struct TTask*)THALFindSelf(TExecBase->texb_HALBase);
 	return exec_allocsignal(TExecBase, task, signals);
 }
 
@@ -185,7 +185,7 @@ EXPORT TUINT exec_AllocSignal(struct TExecBase *TExecBase, TUINT signals)
 
 EXPORT void exec_FreeSignal(struct TExecBase *TExecBase, TUINT signals)
 {
-	struct TTask *task = THALFindSelf(TExecBase->texb_HALBase);
+	struct TTask *task = (struct TTask*)THALFindSelf(TExecBase->texb_HALBase);
 	exec_freesignal(TExecBase, task, signals);
 }
 
@@ -237,7 +237,7 @@ EXPORT TAPTR exec_GetTaskMemManager(struct TExecBase *TExecBase,
 	struct TTask *task)
 {
 	if (task == TNULL)
-		task = THALFindSelf(TExecBase->texb_HALBase);
+		task = (struct TTask*)THALFindSelf(TExecBase->texb_HALBase);
 	return &task->tsk_HeapMemManager;
 }
 
@@ -250,7 +250,7 @@ EXPORT TAPTR exec_GetTaskMemManager(struct TExecBase *TExecBase,
 EXPORT TAPTR exec_GetUserPort(struct TExecBase *TExecBase, struct TTask *task)
 {
 	if (task == TNULL)
-		task = THALFindSelf(TExecBase->texb_HALBase);
+		task = (struct TTask*)THALFindSelf(TExecBase->texb_HALBase);
 	return &task->tsk_UserPort;
 }
 
@@ -264,7 +264,7 @@ EXPORT TAPTR exec_GetUserPort(struct TExecBase *TExecBase, struct TTask *task)
 EXPORT TAPTR exec_GetSyncPort(struct TExecBase *TExecBase, struct TTask *task)
 {
 	if (task == TNULL)
-		task = THALFindSelf(TExecBase->texb_HALBase);
+		task = (struct TTask*)THALFindSelf(TExecBase->texb_HALBase);
 	return &task->tsk_SyncPort;
 }
 
@@ -277,7 +277,7 @@ EXPORT TAPTR exec_GetSyncPort(struct TExecBase *TExecBase, struct TTask *task)
 EXPORT TAPTR exec_GetTaskData(struct TExecBase *TExecBase, struct TTask *task)
 {
 	if (task == TNULL)
-		task = THALFindSelf(TExecBase->texb_HALBase);
+		task = (struct TTask*)THALFindSelf(TExecBase->texb_HALBase);
 	return task->tsk_UserData;
 }
 
@@ -290,7 +290,7 @@ EXPORT TAPTR exec_GetTaskData(struct TExecBase *TExecBase, struct TTask *task)
 EXPORT TAPTR exec_GetInitData(struct TExecBase *TExecBase, struct TTask *task)
 {
 	if (task == TNULL)
-		task = THALFindSelf(TExecBase->texb_HALBase);
+		task = (struct TTask*)THALFindSelf(TExecBase->texb_HALBase);
 	return task->tsk_InitData;
 }
 
@@ -306,7 +306,7 @@ EXPORT TAPTR exec_SetTaskData(struct TExecBase *TExecBase, struct TTask *task,
 	TAPTR hal = TExecBase->texb_HALBase;
 	TAPTR olddata;
 	if (task == TNULL)
-		task = THALFindSelf(hal);
+		task = (struct TTask*)THALFindSelf(hal);
 	THALLock(hal, &task->tsk_TaskLock);
 	olddata = task->tsk_UserData;
 	task->tsk_UserData = data;
@@ -493,7 +493,7 @@ static THOOKENTRY TTAG exec_destroyfreelock(struct THook *hook, TAPTR obj,
 {
 	if (msg == TMSG_DESTROY)
 	{
-		struct TLock *lock = obj;
+		struct TLock *lock = (struct TLock*)obj;
 		struct TExecBase *TExecBase = (struct TExecBase *) TGetExecBase(lock);
 		THALDestroyLock(TExecBase->texb_HALBase, &lock->tlk_HLock);
 		TFree(lock);
@@ -504,7 +504,7 @@ static THOOKENTRY TTAG exec_destroyfreelock(struct THook *hook, TAPTR obj,
 EXPORT TAPTR exec_CreateLock(struct TExecBase *TExecBase, TTAGITEM *tags)
 {
 	struct TLock *lock;
-	lock = TAlloc(TNULL, sizeof(struct TLock));
+	lock = (struct TLock*)TAlloc(TNULL, sizeof(struct TLock));
 	if (lock)
 	{
 		if (exec_initlock(TExecBase, lock))
@@ -525,7 +525,7 @@ EXPORT TAPTR exec_CreateLock(struct TExecBase *TExecBase, TTAGITEM *tags)
 EXPORT void exec_Lock(struct TExecBase *TExecBase, struct TLock *lock)
 {
 	TAPTR hal = TExecBase->texb_HALBase;
-	struct TTask *waiter = THALFindSelf(hal);
+	struct TTask *waiter = (struct TTask*)THALFindSelf(hal);
 	struct TLockWait request;
 	request.tlr_Task = waiter;
 	THALLock(hal, &lock->tlk_HLock);
@@ -587,7 +587,7 @@ static THOOKENTRY TTAG exec_destroyuserport(struct THook *hook, TAPTR obj,
 {
 	if (msg == TMSG_DESTROY)
 	{
-		struct TMsgPort *port = obj;
+		struct TMsgPort *port = (struct TMsgPort*)obj;
 		struct TExecBase *TExecBase = (struct TExecBase *) TGetExecBase(port);
 		exec_freesignal(TExecBase, port->tmp_SigTask, port->tmp_Signal);
 		THALDestroyLock(TExecBase->texb_HALBase, &port->tmp_Lock);
@@ -599,9 +599,9 @@ static THOOKENTRY TTAG exec_destroyuserport(struct THook *hook, TAPTR obj,
 EXPORT struct TMsgPort *exec_CreatePort(struct TExecBase *TExecBase,
 	struct TTagItem *tags)
 {
-	struct TTask *task = THALFindSelf(TExecBase->texb_HALBase);
+	struct TTask *task = (struct TTask*)THALFindSelf(TExecBase->texb_HALBase);
 	struct TMsgPort *port =
-		TAlloc(&task->tsk_HeapMemManager, sizeof(struct TMsgPort));
+		(struct TMsgPort*)TAlloc(&task->tsk_HeapMemManager, sizeof(struct TMsgPort));
 	if (port)
 	{
 		if (exec_initport(TExecBase, port, task, 0))
@@ -690,7 +690,7 @@ EXPORT void exec_PutMsg(struct TExecBase *TExecBase, struct TMsgPort *port,
 		struct TMessage *msg = TGETMSGPTR(mem);
 
 		msg->tmsg_RPort = replyport;
-		msg->tmsg_Sender = THALFindSelf(hal);
+		msg->tmsg_Sender = (struct TTask*)THALFindSelf(hal);
 
 		THALLock(hal, &port->tmp_Lock);
 		TAddTail(&port->tmp_MsgList, (struct TNode *) msg);
@@ -762,7 +762,7 @@ EXPORT TUINT exec_SendMsg(struct TExecBase *TExecBase, struct TMsgPort *port,
 {
 	if (port && msg)
 	{
-		struct TTask *task = THALFindSelf(TExecBase->texb_HALBase);
+		struct TTask *task = (struct TTask*)THALFindSelf(TExecBase->texb_HALBase);
 		return exec_sendmsg(TExecBase, task, port, msg);
 	}
 	TDBPRINTF(TDB_WARN,("port/msg=TNULL\n"));
@@ -780,7 +780,7 @@ EXPORT struct TTask *exec_FindTask(struct TExecBase *TExecBase, TSTRPTR name)
 	TAPTR hal = TExecBase->texb_HALBase;
 	struct TTask *task;
 	if (name == TNULL)
-		task = THALFindSelf(hal);
+		task = (struct TTask*)THALFindSelf(hal);
 	else
 	{
 		THALLock(hal, &TExecBase->texb_Lock);
@@ -802,7 +802,7 @@ EXPORT TAPTR exec_OpenModule(struct TExecBase *TExecBase, TSTRPTR modname,
 	if (modname)
 	{
 		TTAGITEM extratags[2];
-		struct TTask *task = THALFindSelf(TExecBase->texb_HALBase);
+		struct TTask *task = (struct TTask*)THALFindSelf(TExecBase->texb_HALBase);
 		union TTaskRequest *taskreq;
 
 		/* called in module init? this is not allowed */
@@ -869,7 +869,7 @@ EXPORT void exec_CloseModule(struct TExecBase *TExecBase, struct TModule *inst)
 {
 	if (inst)
 	{
-		struct TTask *task = THALFindSelf(TExecBase->texb_HALBase);
+		struct TTask *task = (struct TTask*)THALFindSelf(TExecBase->texb_HALBase);
 		union TTaskRequest *taskreq = &task->tsk_Request;
 		struct TModule *mod = inst->tmd_ModSuper;
 
@@ -923,7 +923,7 @@ EXPORT struct TTask * exec_CreateTask(struct TExecBase *TExecBase,
 	{
 		struct TTagItem tasktags[3];
 		union TTaskRequest *taskreq;
-		struct TTask *task = THALFindSelf(TExecBase->texb_HALBase);
+		struct TTask *task = (struct TTask*)THALFindSelf(TExecBase->texb_HALBase);
 
 		tasktags[0].tti_Tag = TTAG_GOSUB;
 		tasktags[0].tti_Value = (TTAG) tags; /* prefer user tags */
@@ -958,7 +958,7 @@ EXPORT struct TAtom *exec_LockAtom(struct TExecBase *TExecBase, TAPTR atom,
 {
 	if (atom)
 	{
-		struct TTask *task = THALFindSelf(TExecBase->texb_HALBase);
+		struct TTask *task = (struct TTask*)THALFindSelf(TExecBase->texb_HALBase);
 		task->tsk_ReqCode = TTREQ_LOCKATOM;
 		task->tsk_Request.trq_Atom.tra_Atom = atom;
 		task->tsk_Request.trq_Atom.tra_Task = task;
@@ -966,9 +966,9 @@ EXPORT struct TAtom *exec_LockAtom(struct TExecBase *TExecBase, TAPTR atom,
 		if (exec_sendmsg(TExecBase, task, TExecBase->texb_ExecPort, task))
 			atom = task->tsk_Request.trq_Atom.tra_Atom;
 		if (atom && (mode & TATOMF_DESTROY))
-			TUnlockAtom(atom, TATOMF_DESTROY);
+			TUnlockAtom((struct TAtom*)atom, TATOMF_DESTROY);
 	}
-	return atom;
+	return (struct TAtom*)atom;
 }
 
 /*****************************************************************************/
@@ -982,7 +982,7 @@ EXPORT void exec_UnlockAtom(struct TExecBase *TExecBase, struct TAtom *atom,
 {
 	if (atom)
 	{
-		struct TTask *task = THALFindSelf(TExecBase->texb_HALBase);
+		struct TTask *task = (struct TTask*)THALFindSelf(TExecBase->texb_HALBase);
 		task->tsk_ReqCode = TTREQ_UNLOCKATOM;
 		task->tsk_Request.trq_Atom.tra_Atom = atom;
 		task->tsk_Request.trq_Atom.tra_Task = task;
@@ -1108,7 +1108,7 @@ static TBOOL exec_addremmodule(struct TExecBase *TExecBase,
 	if (tmin == TNULL || tmin->tmin_Modules == TNULL)
 		return TFALSE;
 
-	task = THALFindSelf(TExecBase->texb_HALBase);
+	task = (struct TTask*)THALFindSelf(TExecBase->texb_HALBase);
 	task->tsk_ReqCode = reqcode;
 
 	taskreq = &task->tsk_Request;
@@ -1156,8 +1156,8 @@ static THOOKENTRY TTAG scm_hookfunc(struct THook *hook, TAPTR obj, TTAG msg)
 	{
 		case TMSG_DESTROY:
 		{
-			struct ScanModHandle *hnd = obj;
-			struct TExecBase *TExecBase = hnd->handle.thn_Owner;
+			struct ScanModHandle *hnd = (struct ScanModHandle*)obj;
+			struct TExecBase *TExecBase = (struct TExecBase*)hnd->handle.thn_Owner;
 			struct TNode *node, *next;
 			node = hnd->list.tlh_Head.tln_Succ;
 			for (; (next = node->tln_Succ); node = next)
@@ -1171,7 +1171,7 @@ static THOOKENTRY TTAG scm_hookfunc(struct THook *hook, TAPTR obj, TTAG msg)
 		}
 		case TMSG_GETNEXTENTRY:
 		{
-			struct ScanModHandle *hnd = obj;
+			struct ScanModHandle *hnd = (struct ScanModHandle*)obj;
 			struct TNode *next = *hnd->nptr;
 			if (next->tln_Succ == TNULL)
 			{
@@ -1188,11 +1188,11 @@ static THOOKENTRY TTAG scm_hookfunc(struct THook *hook, TAPTR obj, TTAG msg)
 static THOOKENTRY TTAG scm_addext(struct THook *hook, TAPTR obj, TTAG m)
 {
 	struct THALScanModMsg *msg = (struct THALScanModMsg *) m;
-	struct ScanModHandle *hnd = hook->thk_Data;
-	struct TExecBase *TExecBase = hnd->handle.thn_Owner;
+	struct ScanModHandle *hnd = (struct ScanModHandle*)hook->thk_Data;
+	struct TExecBase *TExecBase = (struct TExecBase*)hnd->handle.thn_Owner;
 	TINT len = msg->tsmm_Length;
 	struct ScanModNode *scn =
-		TAlloc(TNULL, sizeof(struct ScanModNode) + len + 1);
+		(struct ScanModNode*)TAlloc(TNULL, sizeof(struct ScanModNode) + len + 1);
 	if (scn)
 	{
 		TCopyMem(msg->tsmm_Name, scn + 1, len);
@@ -1208,7 +1208,7 @@ static THOOKENTRY TTAG scm_addext(struct THook *hook, TAPTR obj, TTAG m)
 
 EXPORT TAPTR exec_ScanModules(struct TExecBase *TExecBase, TTAGITEM *tags)
 {
-	struct ScanModHandle *hnd = TAlloc0(TNULL, sizeof(struct ScanModHandle));
+	struct ScanModHandle *hnd = (struct ScanModHandle*)TAlloc0(TNULL, sizeof(struct ScanModHandle));
 	if (hnd)
 	{
 		struct TAtom *iatom;
@@ -1232,7 +1232,7 @@ EXPORT TAPTR exec_ScanModules(struct TExecBase *TExecBase, TTAGITEM *tags)
 					{
 						struct ScanModNode *scn;
 						TSIZE len = TStrLen(p) + 1;
-						scn = TAlloc(TNULL, sizeof(struct ScanModNode) + len);
+						scn = (struct ScanModNode*)TAlloc(TNULL, sizeof(struct ScanModNode) + len);
 						if (!scn)
 						{
 							TDestroy(&hnd->handle);

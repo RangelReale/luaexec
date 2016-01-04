@@ -92,7 +92,7 @@ static const struct TInitModule tek_lib_exec_initmodules[] =
 
 static int tek_lib_exec_base_gc(lua_State *L)
 {
-	struct LuaExecTask *lexec = luaL_checkudata(L, 1, TEK_LIB_EXEC_CLASSNAME);
+	struct LuaExecTask *lexec = (struct LuaExecTask *)luaL_checkudata(L, 1, TEK_LIB_EXEC_CLASSNAME);
 	struct TExecBase *TExecBase = lexec->exec;
 	if (TExecBase)
 	{
@@ -1264,7 +1264,7 @@ TMODENTRY int luaopen_tek_lib_exec(lua_State *L)
 	/* execmeta */
 #endif
 	
-	lexec = lua_newuserdata(L, sizeof(struct LuaExecTask));
+	lexec = (struct LuaExecTask *)lua_newuserdata(L, sizeof(struct LuaExecTask));
 	/* execmeta, luaexec */
 	lexec->exec = TNULL;
 	
@@ -1295,7 +1295,7 @@ TMODENTRY int luaopen_tek_lib_exec(lua_State *L)
 	lexec->task = TEKCreate(tags);
 	if (lexec->task == TNULL)
 		luaL_error(L, "Failed to initialize TEKlib");
-	lexec->exec = TExecBase = TGetExecBase(lexec->task);
+	lexec->exec = TExecBase = (struct TExecBase *)TGetExecBase(lexec->task);
 
 #if defined(ENABLE_TASKS)
 	if (!tek_lib_exec_init_link_to_parent(L, lexec))

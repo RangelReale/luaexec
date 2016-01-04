@@ -65,7 +65,7 @@ getcommondir(TSTRPTR extra)
 		{
 			if (len > 0)
 			{
-				cfd = malloc(len + (extra? strlen(extra) : 0) + 1);
+				cfd = (TSTRPTR)malloc(len + (extra? strlen(extra) : 0) + 1);
 				if (cfd)
 				{
 					if (RegQueryValueEx(key, "CommonFilesDir", NULL, NULL,
@@ -190,7 +190,7 @@ TEKlib_GetSysDir(TAPTR boot, TTAGITEM *tags)
 	s = (TSTRPTR) TGetTag(tags, TExecBase_SysDir, TNULL);
 	if (s)
 	{
-		sysdir = TEKlib_Alloc(boot, strlen(s) + 1);
+		sysdir = (TSTRPTR)TEKlib_Alloc(boot, strlen(s) + 1);
 		if (sysdir)
 		{
 			strcpy(sysdir, s);
@@ -219,7 +219,7 @@ TEKlib_GetModDir(TAPTR boot, TTAGITEM *tags)
 	s = (TSTRPTR) TGetTag(tags, TExecBase_ModDir, TNULL);
 	if (s)
 	{
-		moddir = TEKlib_Alloc(boot, strlen(s) + 1);
+		moddir = (TSTRPTR)TEKlib_Alloc(boot, strlen(s) + 1);
 		if (moddir)
 		{
 			strcpy(moddir, s);
@@ -248,7 +248,7 @@ TEKlib_GetProgDir(TAPTR boot, TTAGITEM *tags)
 	s = (TSTRPTR) TGetTag(tags, TExecBase_ProgDir, TNULL);
 	if (s)
 	{
-		progdir = TEKlib_Alloc(boot, strlen(s) + 1);
+		progdir = (TSTRPTR)TEKlib_Alloc(boot, strlen(s) + 1);
 		if (progdir)
 		{
 			strcpy(progdir, s);
@@ -256,7 +256,7 @@ TEKlib_GetProgDir(TAPTR boot, TTAGITEM *tags)
 	}
 	else
 	{
-		progdir = malloc(MAX_PATH + 1);
+		progdir = (TSTRPTR)malloc(MAX_PATH + 1);
 		if (progdir)
 		{
 			if (GetModuleFileName(NULL, progdir, MAX_PATH + 1))
@@ -288,7 +288,7 @@ TEKlib_LoadModule(TAPTR boot, TSTRPTR progdir, TSTRPTR moddir, TSTRPTR modname,
 	struct TInitModule *imod;
 	struct ModHandle *handle;
 
-	handle = TEKlib_Alloc(boot, sizeof(struct ModHandle));
+	handle = (struct ModHandle*)TEKlib_Alloc(boot, sizeof(struct ModHandle));
 	if (!handle) return TNULL;
 
 	imod = lookupmodule(modname, tags);
@@ -304,7 +304,7 @@ TEKlib_LoadModule(TAPTR boot, TSTRPTR progdir, TSTRPTR moddir, TSTRPTR modname,
 	len3 = strlen(modname);
 
 	/* + mod\ + .dll + \0 */
-	t = TEKlib_Alloc(boot, TMAX(len1, len2) + len3 + 4 + 4 + 1);
+	t = (TSTRPTR)TEKlib_Alloc(boot, TMAX(len1, len2) + len3 + 4 + 4 + 1);
 	if (t)
 	{
 		if (progdir) strcpy(t, progdir);
@@ -354,8 +354,8 @@ TEKlib_LoadModule(TAPTR boot, TSTRPTR progdir, TSTRPTR moddir, TSTRPTR modname,
 void
 TEKlib_CloseModule(TAPTR boot, TAPTR knmod)
 {
-	struct ModHandle *handle = knmod;
-	if (handle->type == TYPE_DLL) FreeLibrary(handle->entry);
+	struct ModHandle *handle = (struct ModHandle*)knmod;
+	if (handle->type == TYPE_DLL) FreeLibrary((HMODULE)handle->entry);
 	TEKlib_Free(boot, handle, 0);	/* dummy size */
 }
 
@@ -368,10 +368,10 @@ TMODINITFUNC
 TEKlib_GetEntry(TAPTR boot, TAPTR knmod, TSTRPTR name)
 {
 	TAPTR initfunc;
-	struct ModHandle *handle = knmod;
-	if (handle->type == TYPE_LIB) return handle->entry;
+	struct ModHandle *handle = (struct ModHandle*)knmod;
+	if (handle->type == TYPE_LIB) return (TMODINITFUNC)handle->entry;
 	TDBPRINTF(TDB_TRACE,("Looking up symbol: %s\n", name));
-	initfunc = GetProcAddress(handle->entry, name);
+	initfunc = GetProcAddress((HMODULE)handle->entry, name);
 	if (initfunc == TNULL)
 		TDBPRINTF(TDB_ERROR,("Error looking up symbol: %s\n", name));
 	return (TMODINITFUNC) initfunc;
@@ -386,5 +386,5 @@ TUINT
 TEKlib_CallModule(TAPTR boot, TAPTR ModBase, TMODINITFUNC entry, struct TTask *task,
 	TAPTR mod, TUINT16 version, TTAGITEM *tags)
 {
-	return (*entry)(task, mod, version, tags);
+	return (*entry)(task, (struct TModule*)mod, version, tags);
 }

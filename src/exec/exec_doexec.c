@@ -41,7 +41,7 @@ static void exec_unlockatom(TEXECBASE *exec, struct TTask *msg);
 EXPORT TBOOL exec_DoExec(TEXECBASE *TExecBase, TUINT cmd,
 	struct TTagItem *tags)
 {
-	struct TTask *task = TFindTask(TNULL);
+	struct TTask *task = (struct TTask*)TFindTask(TNULL);
 	switch (cmd)
 	{
 		case TEXEC_CMD_RUN:
@@ -69,7 +69,7 @@ EXPORT TBOOL exec_DoExec(TEXECBASE *TExecBase, TUINT cmd,
 
 		case TEXEC_CMD_EXIT:
 			/* place for de-initializations in entry context */
-			TFreeTimeRequest(task->tsk_TimeReq);
+			TFreeTimeRequest((struct TTimeRequest*)task->tsk_TimeReq);
 			return TTRUE;
 	}
 	return TFALSE;
@@ -95,7 +95,7 @@ static void exec_ramlib(TEXECBASE *TExecBase, struct TTask *task,
 		if (sig & TTASK_SIG_ABORT)
 			break;
 
-		while ((taskmsg = TGetMsg(port)))
+		while ((taskmsg = (struct TTask*)TGetMsg(port)))
 		{
 			switch (taskmsg->tsk_ReqCode)
 			{
@@ -126,7 +126,7 @@ static void exec_ramlib(TEXECBASE *TExecBase, struct TTask *task,
 		}
 	}
 
-	while ((taskmsg = TGetMsg(port)))
+	while ((taskmsg = (struct TTask*)TGetMsg(port)))
 		n++;
 
 	if (n > 0)
@@ -189,7 +189,7 @@ static void exec_loadmod(TEXECBASE *TExecBase, struct TTask *task,
 		while (*s++);
 		nlen = s - modname;
 
-		mmem = TAlloc(TNULL, psize + nsize + nlen);
+		mmem = (TINT8*)TAlloc(TNULL, psize + nsize + nlen);
 		if (mmem)
 		{
 			TBOOL success = TFALSE;
@@ -316,12 +316,12 @@ static void exec_main(TEXECBASE *TExecBase, struct TTask *exectask,
 			break;
 
 		if (sig & modreply->tmp_Signal)
-			while ((taskmsg = TGetMsg(modreply)))
+			while ((taskmsg = (struct TTask*)TGetMsg(modreply)))
 				exec_replymod(TExecBase, taskmsg);
 
 		if (sig & execport->tmp_Signal)
 		{
-			while ((taskmsg = TGetMsg(execport)))
+			while ((taskmsg = (struct TTask*)TGetMsg(execport)))
 			{
 				switch (taskmsg->tsk_ReqCode)
 				{
@@ -554,9 +554,9 @@ static THOOKENTRY TTAG exec_usertaskdestroy(struct THook *h, TAPTR obj,
 {
 	if (msg == TMSG_DESTROY)
 	{
-		struct TTask *task = obj;
+		struct TTask *task = (struct TTask*)obj;
 		TEXECBASE *TExecBase = (TEXECBASE *) TGetExecBase(task);
-		struct TTask *self = THALFindSelf(TExecBase->texb_HALBase);
+		struct TTask *self = (struct TTask*)THALFindSelf(TExecBase->texb_HALBase);
 		if (self == task)
 			TDBPRINTF(TDB_INFO,("task cannot destroy itself, ignored\n"));
 		else
@@ -588,7 +588,7 @@ static struct TTask *exec_createtask(TEXECBASE *TExecBase, struct THook *hook,
 	}
 
 	/* note that tasks are message allocations */
-	newtask = TAlloc(&TExecBase->texb_MsgMemManager, sizeof(struct TTask) + tnlen);
+	newtask = (struct TTask*)TAlloc(&TExecBase->texb_MsgMemManager, sizeof(struct TTask) + tnlen);
 	if (newtask == TNULL)
 		return TNULL;
 
@@ -674,11 +674,11 @@ static TTASKENTRY void exec_taskentryfunc(struct TTask *task)
 		task->tsk_IOBase = (struct TIOBase *) TOpenModule("io", 0, TNULL);
 		if (task->tsk_IOBase)
 		{
-			TAPTR newcd = TIODupLock(task->tsk_IOBase, currentdir);
+			TAPTR newcd = TIODupLock(task->tsk_IOBase, (TFILE*)currentdir);
 			if (newcd)
 			{
 				/* new lock on currentdir duplicated from parent */
-				TIOChangeDir(task->tsk_IOBase, newcd);
+				TIOChangeDir(task->tsk_IOBase, (TFILE*)newcd);
 			}
 			else
 				goto closedown;
@@ -717,14 +717,14 @@ static TTASKENTRY void exec_taskentryfunc(struct TTask *task)
 			if (task->tsk_IOBase == TNULL)
 				TDBFATAL();
 		}
-		exec_closetaskfh(task, task->tsk_FHOut, TTASKF_CLOSEOUTPUT);
-		exec_closetaskfh(task, task->tsk_FHIn, TTASKF_CLOSEINPUT);
-		exec_closetaskfh(task, task->tsk_FHErr, TTASKF_CLOSEERROR);
+		exec_closetaskfh(task, (TFILE*)task->tsk_FHOut, TTASKF_CLOSEOUTPUT);
+		exec_closetaskfh(task, (TFILE*)task->tsk_FHIn, TTASKF_CLOSEINPUT);
+		exec_closetaskfh(task, (TFILE*)task->tsk_FHErr, TTASKF_CLOSEERROR);
 	}
 
 closedown:
 
-	TFreeTimeRequest(task->tsk_TimeReq);
+	TFreeTimeRequest((struct TTimeRequest*)task->tsk_TimeReq);
 	task->tsk_TimeReq = TNULL;
 
 	if (task->tsk_IOBase)
@@ -732,7 +732,7 @@ closedown:
 		/* if we are responsible for a currentdir lock, close it */
 		TAPTR cd = TIOChangeDir(task->tsk_IOBase, TNULL);
 		if (cd)
-			TIOUnlockFile(task->tsk_IOBase, cd);
+			TIOUnlockFile(task->tsk_IOBase, (TFILE*)cd);
 		TCloseModule((struct TModule *) task->tsk_IOBase);
 	}
 
@@ -864,7 +864,7 @@ static struct TAtom *exec_newatom(TEXECBASE *TExecBase, TSTRPTR name)
 	s = d = name;
 	while (*s++);
 
-	atom = TAlloc0(TNULL, sizeof(struct TAtom) + (s - d));
+	atom = (struct TAtom*)TAlloc0(TNULL, sizeof(struct TAtom) + (s - d));
 	if (atom)
 	{
 		atom->tatm_Handle.thn_Owner = (struct TModule *) TExecBase;
@@ -887,7 +887,7 @@ static struct TAtom *exec_newatom(TEXECBASE *TExecBase, TSTRPTR name)
 static void exec_lockatom(TEXECBASE *TExecBase, struct TTask *msg)
 {
 	TUINT mode = msg->tsk_Request.trq_Atom.tra_Mode;
-	struct TAtom *atom = msg->tsk_Request.trq_Atom.tra_Atom;
+	struct TAtom *atom = (struct TAtom*) msg->tsk_Request.trq_Atom.tra_Atom;
 	struct TTask *task = msg->tsk_Request.trq_Atom.tra_Task;
 
 	switch (mode & (TATOMF_CREATE|TATOMF_SHARED|TATOMF_NAME|TATOMF_TRY))
@@ -895,7 +895,7 @@ static void exec_lockatom(TEXECBASE *TExecBase, struct TTask *msg)
 		case TATOMF_CREATE | TATOMF_SHARED | TATOMF_NAME:
 		case TATOMF_CREATE | TATOMF_NAME:
 
-			atom = exec_lookupatom(TExecBase, (TSTRPTR) atom);
+			atom = (struct TAtom*)exec_lookupatom(TExecBase, (TSTRPTR) atom);
 			if (atom)
 				goto obtain;
 			goto create;
@@ -903,7 +903,7 @@ static void exec_lockatom(TEXECBASE *TExecBase, struct TTask *msg)
 		case TATOMF_CREATE | TATOMF_SHARED | TATOMF_TRY | TATOMF_NAME:
 		case TATOMF_CREATE | TATOMF_TRY | TATOMF_NAME:
 
-			atom = exec_lookupatom(TExecBase, (TSTRPTR) atom);
+			atom = (struct TAtom*)exec_lookupatom(TExecBase, (TSTRPTR) atom);
 			if (atom)
 			{
 				atom = TNULL; /* already exists - deny */
@@ -911,7 +911,7 @@ static void exec_lockatom(TEXECBASE *TExecBase, struct TTask *msg)
 			}
 
 		create:
-			atom = exec_newatom(TExecBase, msg->tsk_Request.trq_Atom.tra_Atom);
+			atom = exec_newatom(TExecBase, (TSTRPTR)msg->tsk_Request.trq_Atom.tra_Atom);
 
 		reply:
 			exec_replyatom(TExecBase, msg, atom);
@@ -922,7 +922,7 @@ static void exec_lockatom(TEXECBASE *TExecBase, struct TTask *msg)
 		case TATOMF_NAME | TATOMF_TRY:
 		case TATOMF_NAME:
 
-			atom = exec_lookupatom(TExecBase, (TSTRPTR) atom);
+			atom = (struct TAtom*)exec_lookupatom(TExecBase, (TSTRPTR) atom);
 
 		case TATOMF_SHARED | TATOMF_TRY:
 		case TATOMF_SHARED:
@@ -990,7 +990,7 @@ static void exec_lockatom(TEXECBASE *TExecBase, struct TTask *msg)
 static void exec_unlockatom(TEXECBASE *TExecBase, struct TTask *msg)
 {
 	TUINT mode = msg->tsk_Request.trq_Atom.tra_Mode;
-	struct TAtom *atom = msg->tsk_Request.trq_Atom.tra_Atom;
+	struct TAtom *atom = (struct TAtom*)msg->tsk_Request.trq_Atom.tra_Atom;
 
 	atom->tatm_Nest--;
 	TDBPRINTF(TDB_TRACE,("unlock. nest: %d\n", atom->tatm_Nest));

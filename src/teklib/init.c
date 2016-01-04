@@ -161,7 +161,7 @@ init_openexecmodule(struct TEKlibInit *init, TTAGITEM *usertags)
 				init->tli_ExecEntry, TNULL, TNULL, 0xffff, init->tli_HALTags);
 
 			/* get memory for the exec module */
-			execbase = TEKlib_Alloc(init->tli_BootHnd, nsize + psize);
+			execbase = (struct TExecBase*)TEKlib_Alloc(init->tli_BootHnd, nsize + psize);
 			if (execbase)
 			{
 				/* initialize execbase */
@@ -228,7 +228,7 @@ static void init_tek_destroy(TAPTR apptask)
 
 	exec = TGetExecBase(apptask);
 	exectask = TExecFindTask(exec, TTASKNAME_EXEC);
-	init = TExecGetInitData(exec, exectask);
+	init = (struct TEKlibInit*)TExecGetInitData(exec, (struct TTask*)exectask);
 	boot = init->tli_BootHnd;
 
 	init_destroyatom(exec, init->tli_AtomUnique, "sys.unique");
@@ -278,7 +278,7 @@ static struct TTask *init_tek_create(TTAGITEM *usertags)
 	TAPTR boot = TEKlib_Init(usertags);
 	if (boot == TNULL)
 		return TNULL;
-	init = TEKlib_Alloc(boot, sizeof(struct TEKlibInit));
+	init = (struct TEKlibInit*)TEKlib_Alloc(boot, sizeof(struct TEKlibInit));
 	if (init)
 	{
 		init->tli_BootHnd = boot;
@@ -368,5 +368,5 @@ static struct TTask *init_tek_create(TTAGITEM *usertags)
 
 TLIBAPI struct TTask *TEKCreate(TTAGITEM *usertags)
 {
-	return TEKlib_DoRef(init_tek_create, usertags);
+	return (struct TTask*)TEKlib_DoRef(init_tek_create, usertags);
 }

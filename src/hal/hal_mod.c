@@ -17,73 +17,9 @@
 #define HAL_NUMVECTORS	28
 
 static THOOKENTRY TTAG hal_dispatch(struct THook *hook, TAPTR obj, TTAG msg);
-static const TMFPTR hal_vectors[HAL_NUMVECTORS];
+//static const TMFPTR hal_vectors[HAL_NUMVECTORS];
 
-/*****************************************************************************/
-/*
-**	Module Init
-*/
 
-TMODENTRY TUINT
-tek_init_hal(struct TTask *task, struct TModule *mod, TUINT16 version,
-	TTAGITEM *tags)
-{
-	struct THALBase *hal = (struct THALBase *) mod;
-	struct THALBase **halbaseptr;
-	TAPTR boot;
-
-	if (hal == TNULL)
-	{
-		if (version == 0xffff)
-			return sizeof(TAPTR) * HAL_NUMVECTORS; /* negative size */
-
-		if (version <= HAL_VERSION)
-			return sizeof(struct THALBase); /* positive size */
-
-		return 0;
-	}
-
-	boot = (TAPTR) TGetTag(tags, TExecBase_BootHnd, TNULL);
-
-	halbaseptr = (struct THALBase **) TGetTag(tags, TExecBase_HAL, TNULL);
-	*halbaseptr = TNULL;
-
-	hal = hal_allocself(boot,
-		sizeof(struct THALBase) + sizeof(TAPTR) * HAL_NUMVECTORS);
-
-	if (!hal) return 0;
-	hal = (struct THALBase *) (((TAPTR *) hal) + HAL_NUMVECTORS);
-
-	hal_fillmem(hal, hal, sizeof(struct THALBase), 0);
-
-	hal->hmb_BootHnd = boot;
-
-	hal->hmb_Module.tmd_Version = HAL_VERSION;
-	hal->hmb_Module.tmd_Revision = HAL_REVISION;
-
-	hal->hmb_Module.tmd_Handle.thn_Name = TMODNAME_HAL;
-	hal->hmb_Module.tmd_ModSuper = (struct TModule *) hal;
-	hal->hmb_Module.tmd_NegSize = sizeof(TAPTR) * HAL_NUMVECTORS;
-	hal->hmb_Module.tmd_PosSize = sizeof(struct THALBase);
-	hal->hmb_Module.tmd_RefCount = 1;
-	hal->hmb_Module.tmd_Flags =
-		TMODF_INITIALIZED | TMODF_VECTORTABLE | TMODF_OPENCLOSE;
-	hal->hmb_Module.tmd_Handle.thn_Hook.thk_Entry = hal_dispatch;
-	hal->hmb_Module.tmd_Handle.thn_Hook.thk_Data = hal;
-
-	TInitVectors(&hal->hmb_Module, hal_vectors, HAL_NUMVECTORS);
-
-	if (hal_init(hal, tags))
-	{
-		*halbaseptr = hal;
-		return TTRUE;
-	}
-
-	hal_freeself(boot, ((TAPTR *) hal) - HAL_NUMVECTORS,
-		hal->hmb_Module.tmd_NegSize + hal->hmb_Module.tmd_PosSize);
-
-	return TFALSE;
-}
 
 /*****************************************************************************/
 
@@ -128,6 +64,72 @@ hal_vectors[HAL_NUMVECTORS] =
 };
 
 /*****************************************************************************/
+/*
+**	Module Init
+*/
+
+TMODENTRY TUINT
+tek_init_hal(struct TTask *task, struct TModule *mod, TUINT16 version,
+	TTAGITEM *tags)
+{
+	struct THALBase *hal = (struct THALBase *) mod;
+	struct THALBase **halbaseptr;
+	TAPTR boot;
+
+	if (hal == TNULL)
+	{
+		if (version == 0xffff)
+			return sizeof(TAPTR) * HAL_NUMVECTORS; /* negative size */
+
+		if (version <= HAL_VERSION)
+			return sizeof(struct THALBase); /* positive size */
+
+		return 0;
+	}
+
+	boot = (TAPTR)TGetTag(tags, TExecBase_BootHnd, TNULL);
+
+	halbaseptr = (struct THALBase **) TGetTag(tags, TExecBase_HAL, TNULL);
+	*halbaseptr = TNULL;
+
+	hal = (struct THALBase*)hal_allocself(boot,
+		sizeof(struct THALBase) + sizeof(TAPTR) * HAL_NUMVECTORS);
+
+	if (!hal) return 0;
+	hal = (struct THALBase *) (((TAPTR *)hal) + HAL_NUMVECTORS);
+
+	hal_fillmem(hal, hal, sizeof(struct THALBase), 0);
+
+	hal->hmb_BootHnd = boot;
+
+	hal->hmb_Module.tmd_Version = HAL_VERSION;
+	hal->hmb_Module.tmd_Revision = HAL_REVISION;
+
+	hal->hmb_Module.tmd_Handle.thn_Name = TMODNAME_HAL;
+	hal->hmb_Module.tmd_ModSuper = (struct TModule *) hal;
+	hal->hmb_Module.tmd_NegSize = sizeof(TAPTR) * HAL_NUMVECTORS;
+	hal->hmb_Module.tmd_PosSize = sizeof(struct THALBase);
+	hal->hmb_Module.tmd_RefCount = 1;
+	hal->hmb_Module.tmd_Flags =
+		TMODF_INITIALIZED | TMODF_VECTORTABLE | TMODF_OPENCLOSE;
+	hal->hmb_Module.tmd_Handle.thn_Hook.thk_Entry = hal_dispatch;
+	hal->hmb_Module.tmd_Handle.thn_Hook.thk_Data = hal;
+
+	TInitVectors(&hal->hmb_Module, hal_vectors, HAL_NUMVECTORS);
+
+	if (hal_init(hal, tags))
+	{
+		*halbaseptr = hal;
+		return TTRUE;
+	}
+
+	hal_freeself(boot, ((TAPTR *)hal) - HAL_NUMVECTORS,
+		hal->hmb_Module.tmd_NegSize + hal->hmb_Module.tmd_PosSize);
+
+	return TFALSE;
+}
+
+/*****************************************************************************/
 
 static THOOKENTRY TTAG
 hal_dispatch(struct THook *hook, TAPTR obj, TTAG msg)
@@ -141,9 +143,9 @@ hal_dispatch(struct THook *hook, TAPTR obj, TTAG msg)
 				mod->hmb_Module.tmd_NegSize + mod->hmb_Module.tmd_PosSize);
 			break;
 		case TMSG_OPENMODULE:
-			return (TTAG) hal_open(mod, TNULL, obj);
+			return (TTAG) hal_open(mod, TNULL, (TTAGITEM*)obj);
 		case TMSG_CLOSEMODULE:
-			hal_close(obj, TNULL);
+			hal_close((struct THALBase*)obj, TNULL);
 	}
 	return 0;
 }
